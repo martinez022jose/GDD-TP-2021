@@ -1,5 +1,6 @@
-DROP DATABASE GD1C2021ENTREGA;
+USE GD2015C1
 
+DROP DATABASE GD1C2021ENTREGA;
 
 /* Creacion de la base de datos */
 
@@ -40,6 +41,8 @@ CREATE TABLE Factura(
 CREATE TABLE ItemFactura(
 	ifact_idFactura char(15) NOT NULL,
 	ifact_idProducto char(15) NOT NULL,
+	ifact_idCategoria int NOT NULL,
+	ifact_idCliente int NOT NULL,
 	ifact_Cantidad decimal(10,2) NOT NULL,
 	ifact_PrecioFactura decimal(14,2) NOT NULL
 )
@@ -58,6 +61,7 @@ CREATE TABLE Compra(
 CREATE TABLE ItemCompra(
 	icomp_idCompra int NOT NULL,
 	icomp_idProducto char(15) NOT NULL,
+	icomp_idCategoria int NOT NULL,
 	icomp_PrecioCompra decimal(14,2) NOT NULL,
 	icomp_Cantidad decimal(10,2)
 )
@@ -74,6 +78,7 @@ CREATE TABLE Sucursal(
 CREATE TABLE Stock(
 	stoc_idStock int NOT NULL,
 	stoc_idSucursal int NOT NULL,
+	stoc_idCategoria int NOT NULL,
 	stoc_idProducto char(15) NOT NULL,
 	stoc_Cantidad decimal(10,2)
 )
@@ -147,59 +152,75 @@ CREATE TABLE Disco(
 
 
 
-ALTER TABLE Cliente
-ADD 
-	CONSTRAINT PK_Cliente PRIMARY KEY(clie_idCliente)
+/* Primaries key */
+ALTER TABLE Cliente ADD CONSTRAINT PK_Cliente PRIMARY KEY(clie_idCliente)
 
-ALTER TABLE Proveedor
-ADD 
-	CONSTRAINT PK_Proveedor PRIMARY KEY (prov_idProveedor)
+ALTER TABLE Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
+
+ALTER TABLE Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
+
+ALTER TABLE Proveedor  ADD CONSTRAINT PK_Proveedor PRIMARY KEY (prov_idProveedor)
+
+ALTER TABLE Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_idFactura,fact_idCliente)
+
+ALTER TABLE ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_idFactura, ifact_idProducto)
+
+ALTER TABLE Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_idCompra)
+
+ALTER TABLE ItemCompra ADD CONSTRAINT PK_ItemCompra PRIMARY KEY(icomp_idCompra, icomp_idProducto)
+
+ALTER TABLE Sucursal ADD CONSTRAINT PK_Sucursal PRIMARY KEY (sucu_idSucursal)
+
+ALTER TABLE Stock ADD CONSTRAINT PK_Stock PRIMARY KEY (stoc_idStock)
+
+ALTER TABLE Accesorio ADD CONSTRAINT PK_Accesorio PRIMARY KEY (acce_idCodigo)
+
+ALTER TABLE PC ADD CONSTRAINT PK_PC PRIMARY KEY (pc_idCodigo)
+
+ALTER TABLE RAM ADD CONSTRAINT PK_RAM PRIMARY KEY (ram_idRam)
+
+ALTER TABLE Micro ADD CONSTRAINT PK_Micro PRIMARY KEY (micr_idMicro)
+
+ALTER TABLE Video ADD CONSTRAINT PK_Video PRIMARY KEY (vide_idVideo)
+
+ALTER TABLE Disco ADD CONSTRAINT PK_Disco PRIMARY KEY (disc_idDisco)
+
+ALTER TABLE Fabricante ADD CONSTRAINT PK_Fabricante PRIMARY KEY (fabr_codigo)
+
+/* Foreings key */
 
 ALTER TABLE Factura
 ADD 
-	CONSTRAINT PK_Factura PRIMARY KEY(fact_idFactura,fact_idCliente),
 	CONSTRAINT FK_FacturaCliente FOREIGN KEY(fact_idCliente) REFERENCES Cliente(clie_idCliente)
 
 ALTER TABLE ItemFactura
 ADD 
-	CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_idFactura, ifact_idProducto),
-	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_idFactura) REFERENCES Factura(fact_idFactura),
-	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto) REFERENCES Producto(prod_codProducto)
+	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_idFactura, ifact_idCliente) REFERENCES Factura(fact_idFactura,fact_idCliente),
+	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto, ifact_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
 ALTER TABLE Compra
 ADD
-	CONSTRAINT PK_Compra PRIMARY KEY(comp_idCompra),
 	CONSTRAINT FK_CompraProveedor FOREIGN KEY (comp_idProveedor) REFERENCES Proveedor(prov_idProveedor),
 	CONSTRAINT FK_CompraSucursal FOREIGN KEY (comp_idSucursal) REFERENCES Sucursal(sucu_idSucursal)
 
 ALTER TABLE ItemCompra
 ADD 
-	CONSTRAINT PK_ItemCompra PRIMARY KEY(icomp_idCompra, icomp_idProducto),	
 	CONSTRAINT FK_ItemCompraCompra FOREIGN KEY (icomp_idCompra) REFERENCES Compra(comp_idCompra),
-	CONSTRAINT FK_ItemCompraProducto FOREIGN KEY (icomp_idProducto) REFERENCES Producto(prod_codProducto)
+	CONSTRAINT FK_ItemCompraProducto FOREIGN KEY (icomp_idProducto, icomp_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
-ALTER TABLE Sucursal
-ADD 
-	CONSTRAINT PK_Sucursal PRIMARY KEY (sucu_idSucursal)
 
 ALTER TABLE Stock
 ADD 
-	CONSTRAINT PK_Stock PRIMARY KEY (stoc_idStock),
 	CONSTRAINT FK_StockSucursal FOREIGN KEY (stoc_idSucursal) REFERENCES Sucursal(sucu_idSucursal),
-	CONSTRAINT FK_StockProducto FOREIGN KEY (stoc_idProducto) REFERENCES Producto(prod_codProducto)
+	CONSTRAINT FK_StockProducto FOREIGN KEY (stoc_idProducto, stoc_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
 ALTER TABLE Producto
 ADD
-	CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_Categoria),
-	CONSTRAINT FK_ProductoCategoria FOREIGN KEY (prod_Categoria) REFERENCES Categoria(cate_idCategoria)
+	CONSTRAINT FK_ProductoCategoria FOREIGN KEY (prod_idCategoria) REFERENCES Categoria(cate_idCategoria)
 
-ALTER TABLE Accesorio
-ADD
-	CONSTRAINT PK_Accesorio PRIMARY KEY (acce_idCodigo)
 
 ALTER TABLE PC
 ADD
-	CONSTRAINT PK_PC PRIMARY KEY (pc_idCodigo),
 	CONSTRAINT FK_PCRAM FOREIGN KEY (pc_idRam ) REFERENCES RAM(ram_idRam),
 	CONSTRAINT FK_PCMicro FOREIGN KEY (pc_idMicro ) REFERENCES Micro(micr_idMicro),
 	CONSTRAINT FK_PCVideo FOREIGN KEY (pc_idVideo) REFERENCES Video(vide_idVideo),
@@ -207,20 +228,16 @@ ADD
 
 ALTER TABLE RAM
 ADD 
-	CONSTRAINT PK_RAM PRIMARY KEY (ram_idRam),
 	CONSTRAINT FK_RAMFabricante FOREIGN KEY (ram_idFabricante) REFERENCES Fabricante(fabr_codigo)
 
 ALTER TABLE Micro
 ADD 
-	CONSTRAINT PK_Micro PRIMARY KEY (micr_idMicro),
 	CONSTRAINT FK_MicroFabricante FOREIGN KEY (micr_idFabricante) REFERENCES Fabricante(fabr_codigo)
 
 ALTER TABLE Video
 ADD 
-	CONSTRAINT PK_Video PRIMARY KEY (vide_idVideo),
 	CONSTRAINT FK_VideoFabricante FOREIGN KEY (vide_idFabricante) REFERENCES Fabricante(fabr_codigo)
 
 ALTER TABLE Disco
 ADD 
-	CONSTRAINT PK_Disco PRIMARY KEY (disc_idDisco),
 	CONSTRAINT FK_DiscoFabricante FOREIGN KEY (disc_idFabricante) REFERENCES Fabricante(fabr_codigo)
