@@ -92,13 +92,13 @@ CREATE TABLE Accesorio(
 
 CREATE TABLE PC(
 	pc_idCodigo char(15) NOT NULL,
-	acce_Descripcion char(50) NULL,
+	pc_alto char(15) NOT NULL,
+	pc_ancho char(15) NOT NULL,
+	pc_profundida char(15) NOT NULL,
 	pc_idRam char(15) NOT NULL,
 	pc_idMicro char(15) NOT NULL,
 	pc_idVideo char(15) NOT NULL,
-	pc_idDisco char(15) NOT NULL,
-	pc_profundida char(15) NOT NULL,
-	pc_ancho char(15) NOT NULL
+	pc_idDisco char(15) NOT NULL
 )
 
 CREATE TABLE Fabricante(
@@ -122,11 +122,10 @@ CREATE TABLE Micro(
 )
 
 CREATE TABLE Video(
-	vide_idVideo char(15) NOT NULL,
 	vide_Chipset char(30) NOT NULL,
 	vide_Capacidad char(30) NOT NULL,
 	vide_Velocidad char(30) NOT NULL,
-	vide_Modelo char(30) NOT NULL,
+	vide_Modelo char(15) NOT NULL,
 	vide_idFabricante char(30) NOT NULL
 )
 
@@ -135,7 +134,6 @@ CREATE TABLE Disco(
 	disc_tipo char(30) NOT NULL,
 	disc_capacidad char(30) NOT NULL,
 	disc_velocidad char(30) NOT NULL,
-	disc_Modelo char(30) NOT NULL,
 	disc_idFabricante  char(30) NOT NULL
 )
 GO
@@ -170,7 +168,7 @@ ALTER TABLE RAM ADD CONSTRAINT PK_RAM PRIMARY KEY (ram_idRam)
 
 ALTER TABLE Micro ADD CONSTRAINT PK_Micro PRIMARY KEY (micr_idMicro)
 
-ALTER TABLE Video ADD CONSTRAINT PK_Video PRIMARY KEY (vide_idVideo)
+ALTER TABLE Video ADD CONSTRAINT PK_Video PRIMARY KEY (vide_Modelo)
 
 ALTER TABLE Disco ADD CONSTRAINT PK_Disco PRIMARY KEY (disc_idDisco)
 
@@ -212,7 +210,7 @@ ALTER TABLE PC
 ADD
 	CONSTRAINT FK_PCRAM FOREIGN KEY (pc_idRam ) REFERENCES RAM(ram_idRam),
 	CONSTRAINT FK_PCMicro FOREIGN KEY (pc_idMicro ) REFERENCES Micro(micr_idMicro),
-	CONSTRAINT FK_PCVideo FOREIGN KEY (pc_idVideo) REFERENCES Video(vide_idVideo),
+	CONSTRAINT FK_PCVideo FOREIGN KEY (pc_idVideo) REFERENCES Video(vide_Modelo),
 	CONSTRAINT FK_PCDisco FOREIGN KEY (pc_idDisco) REFERENCES Disco(disc_idDisco)
 
 ALTER TABLE RAM
@@ -343,15 +341,220 @@ CLOSE db_cursor_fabricante
 DEALLOCATE db_cursor_fabricante
 GO
 
+-- Discos Rigidos
+
+DECLARE @disc_Codigo CHAR(15)
+DECLARE @disc_Tipo CHAR(30)
+DECLARE @disc_Capacidad CHAR(30)
+DECLARE @disc_Velocidad CHAR(30)
+DECLARE @disc_Fabricante CHAR(30)
+
+DECLARE db_cursor_disco CURSOR FOR 
+SELECT 
+	DISCO_RIGIDO_CODIGO,
+	DISCO_RIGIDO_TIPO,
+	DISCO_RIGIDO_CAPACIDAD,
+	DISCO_RIGIDO_VELOCIDAD,
+	DISCO_RIGIDO_FABRICANTE
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE [DISCO_RIGIDO_CODIGO] IS NOT NULL
+	GROUP BY 
+	DISCO_RIGIDO_CODIGO,
+	DISCO_RIGIDO_TIPO,
+	DISCO_RIGIDO_CAPACIDAD,
+	DISCO_RIGIDO_VELOCIDAD,
+	DISCO_RIGIDO_FABRICANTE
+
+OPEN db_cursor_disco  
+FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
+	VALUES (@disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante)
+
+FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante
+END 
+
+CLOSE db_cursor_disco  
+DEALLOCATE db_cursor_disco
+GO
+
+-- RAM
+
+DECLARE @ram_idRam CHAR(15)
+DECLARE @ram_Tipo CHAR(20)
+DECLARE @ram_Capacidad CHAR(30)
+DECLARE @ram_Velocidad CHAR(30)
+DECLARE @ram_Fabricante CHAR(30)
+
+DECLARE db_cursor_ram CURSOR FOR 
+SELECT 
+	MEMORIA_RAM_CODIGO,
+	MEMORIA_RAM_TIPO,
+	MEMORIA_RAM_CAPACIDAD,
+	MEMORIA_RAM_VELOCIDAD,
+	MEMORIA_RAM_FABRICANTE
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE MEMORIA_RAM_CODIGO IS NOT NULL
+	GROUP BY 
+	MEMORIA_RAM_CODIGO,
+	MEMORIA_RAM_TIPO,
+	MEMORIA_RAM_CAPACIDAD,
+	MEMORIA_RAM_VELOCIDAD,
+	MEMORIA_RAM_FABRICANTE
+
+OPEN db_cursor_ram  
+FETCH NEXT FROM db_cursor_ram INTO @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
+	VALUES (@ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante)
+
+FETCH NEXT FROM db_cursor_ram INTO  @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante
+END 
+
+CLOSE db_cursor_ram  
+DEALLOCATE db_cursor_ram
+GO
+
+-- Microprocesador
+
+DECLARE @micr_idRam CHAR(15)
+DECLARE @micr_Cache CHAR(20)
+DECLARE @micr_CantHilos CHAR(5)
+DECLARE @micr_Velocidad CHAR(30)
+DECLARE @micr_idFabricante CHAR(30)
+
+DECLARE db_cursor_micro CURSOR FOR 
+SELECT 
+	MICROPROCESADOR_CODIGO,
+	MICROPROCESADOR_CACHE,
+	MICROPROCESADOR_CANT_HILOS,
+	MICROPROCESADOR_VELOCIDAD,
+	MICROPROCESADOR_FABRICANTE
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE MICROPROCESADOR_CODIGO IS NOT NULL
+	GROUP BY 
+	MICROPROCESADOR_CODIGO,
+	MICROPROCESADOR_CACHE,
+	MICROPROCESADOR_CANT_HILOS,
+	MICROPROCESADOR_VELOCIDAD,
+	MICROPROCESADOR_FABRICANTE
+
+OPEN db_cursor_micro  
+FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
+	VALUES (@micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante)
+
+FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante
+END 
+
+CLOSE db_cursor_micro  
+DEALLOCATE db_cursor_micro
+GO
+
+-- Placa video
+
+DECLARE @vide_Modelo CHAR(15)
+DECLARE @vide_Chipset CHAR(20)
+DECLARE @vide_Velocidad CHAR(5)
+DECLARE @vide_Capacidad CHAR(30)
+DECLARE @vide_idFabricante CHAR(30)
+
+DECLARE db_cursor_video CURSOR FOR 
+SELECT 
+	PLACA_VIDEO_MODELO,
+	PLACA_VIDEO_CHIPSET,
+	PLACA_VIDEO_VELOCIDAD,
+	PLACA_VIDEO_CAPACIDAD,
+	PLACA_VIDEO_FABRICANTE
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE PLACA_VIDEO_MODELO IS NOT NULL
+	GROUP BY 
+	PLACA_VIDEO_MODELO,
+	PLACA_VIDEO_CHIPSET,
+	PLACA_VIDEO_VELOCIDAD,
+	PLACA_VIDEO_CAPACIDAD,
+	PLACA_VIDEO_FABRICANTE
+
+OPEN db_cursor_video  
+FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
+	VALUES ( @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante)
+
+FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
+END 
+
+CLOSE db_cursor_video  
+DEALLOCATE db_cursor_video
+GO
 
 /*
 
-
-
-
-
-
-
+	pc_idCodigo char(15) NOT NULL,
+	pc_idRam char(15) NOT NULL,
+	pc_idMicro char(15) NOT NULL,
+	pc_idVideo char(15) NOT NULL,
+	pc_idDisco char(15) NOT NULL,
+	pc_profundida char(15) NOT NULL,
+	pc_ancho char(15) NOT NULL
 
 
 */
+
+-- PC
+
+DECLARE @pc_codigo CHAR(15)
+DECLARE @pc_alto CHAR(15)
+DECLARE @pc_ancho CHAR(15)
+DECLARE @pc_profundidad CHAR(15)
+DECLARE @pc_idRam CHAR(15)
+DECLARE @pc_idVideo CHAR(15)
+DECLARE @pc_idDisco CHAR(15)
+DECLARE @pc_idMicro CHAR(15)
+
+DECLARE db_cursor_pc CURSOR FOR 
+SELECT 
+	PC_CODIGO,
+	PC_ALTO,
+	PC_ANCHO,
+	PC_PROFUNDIDAD,
+	MEMORIA_RAM_CODIGO,
+	PLACA_VIDEO_MODELO,
+	DISCO_RIGIDO_CODIGO,
+	MICROPROCESADOR_CODIGO
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE PC_CODIGO IS NOT NULL
+	GROUP BY 
+	PC_CODIGO,
+	PC_ALTO,
+	PC_ANCHO,
+	PC_PROFUNDIDAD,
+	MEMORIA_RAM_CODIGO,
+	PLACA_VIDEO_MODELO,
+	DISCO_RIGIDO_CODIGO,
+	MICROPROCESADOR_CODIGO
+
+OPEN db_cursor_pc  
+FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
+	VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
+
+FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro
+END 
+
+CLOSE db_cursor_pc  
+DEALLOCATE db_cursor_pc
+GO
+
