@@ -4,8 +4,9 @@ Confirmados:
 - Se saca el campo disc_modelo, nunca existio ese campo en la tabla maestra.
 - Se cambia el campo video_idVideo por el campo video_Modelo, ya que se puede usar de PK el modelo de la tarjeta.
 - Agrego campo pc_alto que falta en el DER
-
-
-
-Pendientes por confirmar:
 - Se elimina la tabla Proveedor (No hay datos para llenarla)
+- Se cambia la PK comp_idCompra por el comp_NumberoCompra, ya que es unica.
+
+
+
+

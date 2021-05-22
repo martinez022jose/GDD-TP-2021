@@ -17,11 +17,13 @@ CREATE TABLE Cliente(
 	clie_telefono char(50) NULL
 )
 
-CREATE TABLE Proveedor(
-	prov_idProveedor int NOT NULL,
-	prov_idCompra int NOT NULL,
-	prov_Descripcion char(50) NOT NULL
-)
+/*
+	CREATE TABLE Proveedor(
+		prov_idProveedor int NOT NULL,
+		prov_idCompra int NOT NULL,
+		prov_Descripcion char(50) NOT NULL
+	)
+*/
 
 CREATE TABLE Factura(
 	fact_idFactura char(15) NOT NULL,
@@ -41,16 +43,14 @@ CREATE TABLE ItemFactura(
 )
 
 CREATE TABLE Compra(
-	comp_idCompra int NOT NULL,
+	comp_NumeroCompra char(15) NOT NULL,
 	comp_idSucursal int NOT NULL,
-	comp_idProveedor int NULL,
 	comp_FechaCompra smalldatetime NOT NULL,
-	comp_NumeroCompra char(8) NOT NULL,
 	comp_GastoTotal decimal(14,2) NOT NULL
 )
 
 CREATE TABLE ItemCompra(
-	icomp_idCompra int NOT NULL,
+	icomp_idCompra char(15) NOT NULL,
 	icomp_idProducto char(15) NOT NULL,
 	icomp_idCategoria int NOT NULL,
 	icomp_PrecioCompra decimal(14,2) NOT NULL,
@@ -146,13 +146,13 @@ ALTER TABLE Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
 
 ALTER TABLE Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
 
-ALTER TABLE Proveedor  ADD CONSTRAINT PK_Proveedor PRIMARY KEY (prov_idProveedor)
+-- ALTER TABLE Proveedor  ADD CONSTRAINT PK_Proveedor PRIMARY KEY (prov_idProveedor)
 
 ALTER TABLE Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_idFactura,fact_idCliente)
 
 ALTER TABLE ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_idFactura, ifact_idProducto)
 
-ALTER TABLE Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_idCompra)
+ALTER TABLE Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_NumeroCompra)
 
 ALTER TABLE ItemCompra ADD CONSTRAINT PK_ItemCompra PRIMARY KEY(icomp_idCompra, icomp_idProducto)
 
@@ -187,12 +187,12 @@ ADD
 
 ALTER TABLE Compra
 ADD
-	CONSTRAINT FK_CompraProveedor FOREIGN KEY (comp_idProveedor) REFERENCES Proveedor(prov_idProveedor),
+	-- CONSTRAINT FK_CompraProveedor FOREIGN KEY (comp_idProveedor) REFERENCES Proveedor(prov_idProveedor),
 	CONSTRAINT FK_CompraSucursal FOREIGN KEY (comp_idSucursal) REFERENCES Sucursal(sucu_idSucursal)
 
 ALTER TABLE ItemCompra
 ADD 
-	CONSTRAINT FK_ItemCompraCompra FOREIGN KEY (icomp_idCompra) REFERENCES Compra(comp_idCompra),
+	CONSTRAINT FK_ItemCompraCompra FOREIGN KEY (icomp_idCompra) REFERENCES Compra(comp_NumeroCompra),
 	CONSTRAINT FK_ItemCompraProducto FOREIGN KEY (icomp_idProducto, icomp_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
 
@@ -230,9 +230,17 @@ ADD
 	CONSTRAINT FK_DiscoFabricante FOREIGN KEY (disc_idFabricante) REFERENCES Fabricante(fabr_codigo)
 GO
 
+/* Inserts */
+
+INSERT INTO [GD1C2021ENTREGA].dbo.Categoria (cate_idCategoria, cate_Descripcion) VALUES (1,'PC'), (2,'ACCESORIO')
+GO
+
 /* Migracion */
 
+
 -- Cliente
+-- TODO: Revisa porque ejecuta con warning
+
 DECLARE @clie_Apellido CHAR(30)
 DECLARE @clie_Nombre CHAR(30)
 DECLARE @clie_DNI CHAR(15) 
@@ -497,21 +505,8 @@ CLOSE db_cursor_video
 DEALLOCATE db_cursor_video
 GO
 
-/*
-
-	pc_idCodigo char(15) NOT NULL,
-	pc_idRam char(15) NOT NULL,
-	pc_idMicro char(15) NOT NULL,
-	pc_idVideo char(15) NOT NULL,
-	pc_idDisco char(15) NOT NULL,
-	pc_profundida char(15) NOT NULL,
-	pc_ancho char(15) NOT NULL
-
-
-*/
 
 -- PC
-
 DECLARE @pc_codigo CHAR(15)
 DECLARE @pc_alto CHAR(15)
 DECLARE @pc_ancho CHAR(15)
@@ -520,6 +515,10 @@ DECLARE @pc_idRam CHAR(15)
 DECLARE @pc_idVideo CHAR(15)
 DECLARE @pc_idDisco CHAR(15)
 DECLARE @pc_idMicro CHAR(15)
+DECLARE @prod_precio decimal(14,2)
+DECLARE @cate_idPc int
+
+SELECT @cate_idPc = cate_idCategoria FROM [GD1C2021ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'PC'
 
 DECLARE db_cursor_pc CURSOR FOR 
 SELECT 
@@ -530,9 +529,10 @@ SELECT
 	MEMORIA_RAM_CODIGO,
 	PLACA_VIDEO_MODELO,
 	DISCO_RIGIDO_CODIGO,
-	MICROPROCESADOR_CODIGO
+	MICROPROCESADOR_CODIGO,
+	COMPRA_PRECIO
 	FROM [GD1C2021].[gd_esquema].[Maestra]
-	WHERE PC_CODIGO IS NOT NULL
+	WHERE COMPRA_PRECIO IS NOT NULL AND PC_CODIGO IS NOT NULL 
 	GROUP BY 
 	PC_CODIGO,
 	PC_ALTO,
@@ -541,20 +541,148 @@ SELECT
 	MEMORIA_RAM_CODIGO,
 	PLACA_VIDEO_MODELO,
 	DISCO_RIGIDO_CODIGO,
-	MICROPROCESADOR_CODIGO
+	MICROPROCESADOR_CODIGO,
+	COMPRA_PRECIO
 
 OPEN db_cursor_pc  
-FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro
+FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	INSERT INTO [GD1C2021ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
 	VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
 
-FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro
+	-- TODO: Checkear que el precio seteado sea el correcto
+	INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, 'PC ' + @pc_codigo, @prod_precio); 
+
+
+FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
 END 
 
 CLOSE db_cursor_pc  
 DEALLOCATE db_cursor_pc
 GO
 
+-- Accesorios
+DECLARE @acce_codigo CHAR(15)
+DECLARE @acce_descripcion CHAR(50)
+DECLARE @prod_precio decimal(14,2)
+DECLARE @cate_idAc int
+
+SELECT @cate_idAc = cate_idCategoria FROM [GD1C2021ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'ACCESORIO'
+
+DECLARE db_cursor_accesorio CURSOR FOR 
+SELECT 
+	ACCESORIO_CODIGO,
+	AC_DESCRIPCION,
+	COMPRA_PRECIO
+  FROM [GD1C2021].[gd_esquema].[Maestra]
+  WHERE COMPRA_PRECIO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
+  GROUP BY ACCESORIO_CODIGO, AC_DESCRIPCION, COMPRA_PRECIO
+
+
+OPEN db_cursor_accesorio  
+FETCH NEXT FROM db_cursor_accesorio INTO @acce_codigo, @acce_descripcion, @prod_precio
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	INSERT INTO [GD1C2021ENTREGA].dbo.Accesorio(acce_idCodigo, acce_Descripcion) VALUES ( @acce_codigo, @acce_descripcion)
+	-- TODO: Checkear que el precio seteado sea el correcto
+	INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @acce_codigo,  @cate_idAc, @acce_descripcion, @prod_precio); 
+
+FETCH NEXT FROM db_cursor_accesorio INTO @acce_codigo, @acce_descripcion, @prod_precio
+END 
+
+CLOSE db_cursor_accesorio  
+DEALLOCATE db_cursor_accesorio
+GO
+
+-- Compra
+
+DECLARE @comp_NumeroCompra char(15)
+DECLARE @comp_SucursalMail char(50)
+DECLARE @comp_FechaCompra smalldatetime
+DECLARE @comp_GastoTotal decimal(14,2)
+DECLARE @comp_idSucursal int
+
+DECLARE db_cursor_compra CURSOR FOR 
+SELECT 
+	COMPRA_NUMERO,
+	SUCURSAL_MAIL,
+	COMPRA_FECHA,
+	SUM(COMPRA_PRECIO) AS COMPRA_PRECIO
+  FROM [GD1C2021].[gd_esquema].[Maestra]
+  WHERE COMPRA_NUMERO IS NOT NULL
+  GROUP BY 
+	SUCURSAL_MAIL,
+	COMPRA_FECHA,
+	COMPRA_NUMERO
+
+
+OPEN db_cursor_compra  
+FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	
+	SELECT @comp_idSucursal = sucu_idSucursal FROM [GD1C2021ENTREGA].dbo.Sucursal WHERE sucu_Mail= @comp_SucursalMail
+
+	INSERT INTO [GD1C2021ENTREGA].dbo.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
+
+FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
+END 
+
+CLOSE db_cursor_compra  
+DEALLOCATE db_cursor_compra
+GO
+
+-- Item compra
+
+DECLARE @icomp_NumeroCompra char(15)
+DECLARE @icomp_idProducto char(15)
+DECLARE @icomp_codPC char(15)
+DECLARE @icomp_codAC char(15)
+DECLARE @icomp_idCategoria int
+DECLARE @icomp_PrecioCompra decimal(14,2)
+DECLARE @icomp_Cantidad decimal(10,0)
+
+DECLARE db_cursor_item_compra CURSOR FOR 
+SELECT
+      [COMPRA_NUMERO],
+	  [COMPRA_PRECIO],
+	  SUM([COMPRA_CANTIDAD]) AS Cantidad,
+	  [PC_CODIGO],
+	  [ACCESORIO_CODIGO]
+  FROM [GD1C2021].[gd_esquema].[Maestra]
+  WHERE COMPRA_NUMERO IS NOT NULL
+  GROUP BY
+	  [COMPRA_NUMERO],
+	  [COMPRA_PRECIO],
+  	  [PC_CODIGO],
+	  [ACCESORIO_CODIGO]
+
+OPEN db_cursor_item_compra  
+FETCH NEXT FROM db_cursor_item_compra INTO @icomp_NumeroCompra, @icomp_PrecioCompra, @icomp_Cantidad, @icomp_codPC, @icomp_codAC
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	
+	IF @icomp_codPC IS NOT NULL
+		BEGIN
+			SELECT @icomp_idProducto = @icomp_codPC;
+			SELECT @icomp_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'PC';
+		END
+	ELSE
+		BEGIN 
+			SELECT @icomp_idProducto = @icomp_codAC;
+			SELECT @icomp_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'ACCESORIO';
+		END
+
+	INSERT INTO [GD1C2021ENTREGA].dbo.ItemCompra(icomp_idCompra, icomp_idProducto, icomp_idCategoria, icomp_PrecioCompra, icomp_Cantidad) VALUES (@icomp_NumeroCompra, @icomp_idProducto, @icomp_idCategoria, @icomp_PrecioCompra, @icomp_Cantidad)
+
+FETCH NEXT FROM db_cursor_item_compra INTO @icomp_NumeroCompra, @icomp_PrecioCompra, @icomp_Cantidad, @icomp_codPC, @icomp_codAC
+END 
+
+CLOSE db_cursor_item_compra  
+DEALLOCATE db_cursor_item_compra
+GO
