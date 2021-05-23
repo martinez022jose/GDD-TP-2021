@@ -26,14 +26,14 @@ CREATE TABLE Cliente(
 */
 
 CREATE TABLE Factura(
-	fact_Numero char(15) NOT NULL,
+	fact_Numero decimal(18, 0) NOT NULL,
 	fact_idCliente char(15) NULL, -- TODO: Cambiar x 'NOT NULL'
 	fact_fecha smalldatetime NOT NULL,
 	fact_Total decimal(14,2) NOT NULL
 )
 
 CREATE TABLE ItemFactura(
-	ifact_idFactura char(15) NOT NULL,
+	ifact_FacturaNumero decimal(18, 0) NOT NULL,
 	ifact_idProducto char(15) NOT NULL,
 	ifact_idCategoria int NOT NULL,
 	ifact_Cantidad decimal(10,2) NOT NULL,
@@ -148,7 +148,7 @@ ALTER TABLE Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, p
 
 ALTER TABLE Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
 
-ALTER TABLE ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_idFactura, ifact_idProducto)
+ALTER TABLE ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria)
 
 ALTER TABLE Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_NumeroCompra)
 
@@ -180,7 +180,7 @@ ADD
 
 ALTER TABLE ItemFactura
 ADD 
-	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_idFactura) REFERENCES Factura(fact_Numero),
+	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_FacturaNumero) REFERENCES Factura(fact_Numero),
 	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto, ifact_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
 ALTER TABLE Compra
@@ -257,7 +257,7 @@ SELECT
 	CLIENTE_MAIL,
 	CLIENTE_TELEFONO
 FROM [GD1C2021].gd_esquema.Maestra
-WHERE CLIENTE_APELLIDO IS NOT NULL;
+WHERE CLIENTE_DNI IS NOT NULL;
 
 OPEN db_cursor_cliente  
 FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono
@@ -687,7 +687,7 @@ GO
 
 -- Factura / Item Factura
  
-DECLARE @fact_idFactura char(15)
+DECLARE @fact_NumeroFactura decimal(18,0)
 DECLARE @fact_clieDNI char(15)
 DECLARE @fact_fecha smalldatetime
 --
@@ -706,7 +706,7 @@ DECLARE @fact_created_total char(15)
 
 
 DECLARE db_cursor_item_factura CURSOR FOR 
-SELECT 
+SELECT
 		FACTURA_NUMERO,
 		CLIENTE_DNI,
 		FACTURA_FECHA,
@@ -722,9 +722,10 @@ SELECT
 		FACTURA_FECHA,
 		PC_CODIGO,
 		ACCESORIO_CODIGO
+	ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
 
 OPEN db_cursor_item_factura  
-FETCH NEXT FROM db_cursor_item_factura INTO @fact_idFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura INTO @fact_NumeroFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
@@ -743,21 +744,22 @@ BEGIN
 			SELECT @ifact_PrecioProducto = prod_Precio FROM Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
 		END
 
-	SELECT @fact_created = fact_Numero FROM Factura WHERE fact_Numero = @fact_idFactura
 
-	IF @fact_created IS NULL
+	BEGIN
+	IF NOT EXISTS (SELECT fact_Numero FROM Factura WHERE fact_Numero = @fact_NumeroFactura)
 		BEGIN
-			INSERT INTO [GD1C2021ENTREGA].dbo.Factura(fact_Numero, fact_idCliente, fact_fecha, fact_Total) VALUES (@fact_idFactura, @fact_clieDNI, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+		INSERT INTO [GD1C2021ENTREGA].dbo.Factura(fact_Numero, fact_idCliente, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 		END
 	ELSE
 		BEGIN
-		SELECT @fact_created_total = fact_Total FROM Factura WHERE fact_Numero = @fact_idFactura
-		UPDATE Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_idFactura;
+		SELECT @fact_created_total = fact_Total FROM Factura WHERE fact_Numero = @fact_NumeroFactura
+		UPDATE Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
 		END
+	END
+	
+	INSERT INTO GD1C2021ENTREGA.dbo.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
 
-	INSERT INTO [GD1C2021ENTREGA].dbo.ItemFactura(ifact_idFactura, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_idFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
-
-FETCH NEXT FROM db_cursor_item_factura INTO @fact_idFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura INTO @fact_NumeroFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
 END 
 
 CLOSE db_cursor_item_factura  
