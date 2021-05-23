@@ -26,9 +26,8 @@ CREATE TABLE Cliente(
 */
 
 CREATE TABLE Factura(
-	fact_idFactura char(15) NOT NULL,
-	fact_idCliente char(15) NOT NULL,
-	fact_Numero char(8) NOT NULL,
+	fact_Numero char(15) NOT NULL,
+	fact_idCliente char(15) NULL, -- TODO: Cambiar x 'NOT NULL'
 	fact_fecha smalldatetime NOT NULL,
 	fact_Total decimal(14,2) NOT NULL
 )
@@ -37,9 +36,8 @@ CREATE TABLE ItemFactura(
 	ifact_idFactura char(15) NOT NULL,
 	ifact_idProducto char(15) NOT NULL,
 	ifact_idCategoria int NOT NULL,
-	ifact_idCliente char(15) NOT NULL,
 	ifact_Cantidad decimal(10,2) NOT NULL,
-	ifact_PrecioFactura decimal(14,2) NOT NULL
+	ifact_PrecioProducto decimal(14,2) NOT NULL
 )
 
 CREATE TABLE Compra(
@@ -148,7 +146,7 @@ ALTER TABLE Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, p
 
 -- ALTER TABLE Proveedor  ADD CONSTRAINT PK_Proveedor PRIMARY KEY (prov_idProveedor)
 
-ALTER TABLE Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_idFactura,fact_idCliente)
+ALTER TABLE Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
 
 ALTER TABLE ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_idFactura, ifact_idProducto)
 
@@ -182,7 +180,7 @@ ADD
 
 ALTER TABLE ItemFactura
 ADD 
-	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_idFactura, ifact_idCliente) REFERENCES Factura(fact_idFactura,fact_idCliente),
+	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_idFactura) REFERENCES Factura(fact_Numero),
 	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto, ifact_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
 
 ALTER TABLE Compra
@@ -685,4 +683,83 @@ END
 
 CLOSE db_cursor_item_compra  
 DEALLOCATE db_cursor_item_compra
+GO
+
+-- Factura / Item Factura
+ 
+DECLARE @fact_idFactura char(15)
+DECLARE @fact_clieDNI char(15)
+DECLARE @fact_fecha smalldatetime
+--
+DECLARE @ifact_idProducto char(15)
+DECLARE @ifact_idCategoria int
+DECLARE @ifact_Cantidad decimal(10,2)
+DECLARE @ifact_PrecioProducto decimal(14,2)
+--
+DECLARE @ifact_PC char(15)
+DECLARE @ifact_AC char(15)
+DECLARE @ifact_PC_total int
+DECLARE @ifact_AC_total int
+
+DECLARE @fact_created char(15)
+DECLARE @fact_created_total char(15)
+
+
+DECLARE db_cursor_item_factura CURSOR FOR 
+SELECT 
+		FACTURA_NUMERO,
+		CLIENTE_DNI,
+		FACTURA_FECHA,
+		PC_CODIGO,
+		ACCESORIO_CODIGO,
+		COUNT(PC_CODIGO) AS total_pc_vendido,
+		COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
+	FROM [GD1C2021].[gd_esquema].[Maestra]
+	WHERE FACTURA_NUMERO IS NOT NULL
+	GROUP BY 
+		FACTURA_NUMERO,
+		CLIENTE_DNI,
+		FACTURA_FECHA,
+		PC_CODIGO,
+		ACCESORIO_CODIGO
+
+OPEN db_cursor_item_factura  
+FETCH NEXT FROM db_cursor_item_factura INTO @fact_idFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	IF @ifact_PC IS NOT NULL
+		BEGIN
+			SELECT @ifact_idProducto = @ifact_PC;
+			SELECT @ifact_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'PC'
+			SELECT @ifact_Cantidad = @ifact_PC_total
+			SELECT @ifact_PrecioProducto = prod_Precio FROM Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
+		END
+	ELSE
+		BEGIN 
+			SELECT @ifact_idProducto = @ifact_AC;
+			SELECT @ifact_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'ACCESORIO'
+			SELECT @ifact_Cantidad = @ifact_AC_total
+			SELECT @ifact_PrecioProducto = prod_Precio FROM Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
+		END
+
+	SELECT @fact_created = fact_Numero FROM Factura WHERE fact_Numero = @fact_idFactura
+
+	IF @fact_created IS NULL
+		BEGIN
+			INSERT INTO [GD1C2021ENTREGA].dbo.Factura(fact_Numero, fact_idCliente, fact_fecha, fact_Total) VALUES (@fact_idFactura, @fact_clieDNI, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+		END
+	ELSE
+		BEGIN
+		SELECT @fact_created_total = fact_Total FROM Factura WHERE fact_Numero = @fact_idFactura
+		UPDATE Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_idFactura;
+		END
+
+	INSERT INTO [GD1C2021ENTREGA].dbo.ItemFactura(ifact_idFactura, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_idFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
+
+FETCH NEXT FROM db_cursor_item_factura INTO @fact_idFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+END 
+
+CLOSE db_cursor_item_factura  
+DEALLOCATE db_cursor_item_factura
 GO
