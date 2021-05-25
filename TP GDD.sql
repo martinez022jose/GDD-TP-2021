@@ -1,8 +1,8 @@
 /* Creacion de la base de datos */
 
-USE GD2015C1
-DROP DATABASE GD1C2021ENTREGA;
-CREATE DATABASE GD1C2021ENTREGA;
+--USE GD2015C1
+--DROP DATABASE GD1C2021ENTREGA;
+--CREATE DATABASE GD1C2021ENTREGA;
 USE GD1C2021ENTREGA;
 GO
 
@@ -293,11 +293,19 @@ OPEN db_cursor_sucursal
 FETCH NEXT FROM db_cursor_sucursal INTO @sucu_Ciudad, @sucu_Direccion, @sucu_Mail, @sucu_Telefono
 
 WHILE @@FETCH_STATUS = 0  
-BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
-	VALUES (@sucu_Mail, @sucu_Direccion, @sucu_Telefono, @sucu_Ciudad)
+BEGIN
+	BEGIN 
+				BEGIN TRY
 
-FETCH NEXT FROM db_cursor_sucursal INTO @sucu_Ciudad, @sucu_Direccion, @sucu_Mail, @sucu_Telefono
+							INSERT INTO [GD1C2021ENTREGA].dbo.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
+							VALUES (@sucu_Mail, @sucu_Direccion, @sucu_Telefono, @sucu_Ciudad)
+					FETCH NEXT FROM db_cursor_sucursal INTO @sucu_Ciudad, @sucu_Direccion, @sucu_Mail, @sucu_Telefono
+				END TRY
+				BEGIN CATCH 
+					PRINT ERROR_MESSAGE()
+				END CATCH
+
+	END 
 END 
 
 CLOSE db_cursor_sucursal  
