@@ -139,6 +139,10 @@ GO
 /* Primaries key */
 
 ALTER TABLE Cliente ADD CONSTRAINT PK_Cliente PRIMARY KEY(clie_DNI)
+ALTER TABLE Cliente 
+DROP CONSTRAINT PRIMARY KEY;
+
+drop table dbo.Cliente
 
 ALTER TABLE Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
 
@@ -259,6 +263,7 @@ SELECT
 FROM [GD1C2021].gd_esquema.Maestra
 WHERE CLIENTE_DNI IS NOT NULL;
 
+
 OPEN db_cursor_cliente  
 FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono
 
@@ -345,10 +350,15 @@ FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Fabricante(fabr_codigo)
-	VALUES (@fabr_codigo)
+	BEGIN TRY
+					INSERT INTO [GD1C2021ENTREGA].dbo.Fabricante(fabr_codigo)
+					VALUES (@fabr_codigo)
 
-FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
+				FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
+	END TRY
+	BEGIN CATCH 
+			PRINT ERROR_MESSAGE()
+	END CATCH
 END 
 
 CLOSE db_cursor_fabricante  
@@ -384,10 +394,14 @@ FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, 
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
-	VALUES (@disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante)
-
-FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante
+	BEGIN TRY
+				INSERT INTO [GD1C2021ENTREGA].dbo.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
+				VALUES (@disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante)
+			FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
 END 
 
 CLOSE db_cursor_disco  
@@ -423,10 +437,16 @@ FETCH NEXT FROM db_cursor_ram INTO @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_V
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
-	VALUES (@ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante)
+	BEGIN TRY
+			INSERT INTO [GD1C2021ENTREGA].dbo.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
+			VALUES (@ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante)
 
-FETCH NEXT FROM db_cursor_ram INTO  @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante
+		FETCH NEXT FROM db_cursor_ram INTO  @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
+	
 END 
 
 CLOSE db_cursor_ram  
@@ -462,10 +482,16 @@ FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, 
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
-	VALUES (@micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante)
+	BEGIN TRY
+				INSERT INTO [GD1C2021ENTREGA].dbo.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
+				VALUES (@micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante)
 
-FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante
+			FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
+	
 END 
 
 CLOSE db_cursor_micro  
@@ -500,11 +526,16 @@ OPEN db_cursor_video
 FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
 
 WHILE @@FETCH_STATUS = 0  
-BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
-	VALUES ( @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante)
+BEGIN
+	BEGIN TRY
+				INSERT INTO [GD1C2021ENTREGA].dbo.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
+				VALUES ( @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante)
 
-FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
+		FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
 END 
 
 CLOSE db_cursor_video  
@@ -555,14 +586,17 @@ FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundid
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
-	VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
+	BEGIN TRY
+			INSERT INTO [GD1C2021ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
+			VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
+			-- TODO: Se agrega el 20%
+			INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, 'PC ' + @pc_codigo, @prod_precio + @prod_precio); 
 
-	-- TODO: Checkear que el precio seteado sea el correcto
-	INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, 'PC ' + @pc_codigo, @prod_precio); 
-
-
-FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
+			FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH	
 END 
 
 CLOSE db_cursor_pc  
