@@ -650,13 +650,14 @@ SELECT
 	COMPRA_NUMERO,
 	SUCURSAL_MAIL,
 	COMPRA_FECHA,
-	SUM(COMPRA_PRECIO) AS COMPRA_PRECIO
+	SUM(COMPRA_PRECIO) * SUM(COMPRA_CANTIDAD) AS COMPRA_PRECIO
   FROM [GD1C2021].[gd_esquema].[Maestra]
   WHERE COMPRA_NUMERO IS NOT NULL
   GROUP BY 
 	SUCURSAL_MAIL,
 	COMPRA_FECHA,
 	COMPRA_NUMERO
+	order by COMPRA_NUMERO
 
 
 OPEN db_cursor_compra  
@@ -664,12 +665,16 @@ FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @c
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
+	BEGIN TRY
+				SELECT @comp_idSucursal = sucu_idSucursal FROM [GD1C2021ENTREGA].dbo.Sucursal WHERE sucu_Mail= @comp_SucursalMail
+				INSERT INTO [GD1C2021ENTREGA].dbo.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
+
+	FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
 	
-	SELECT @comp_idSucursal = sucu_idSucursal FROM [GD1C2021ENTREGA].dbo.Sucursal WHERE sucu_Mail= @comp_SucursalMail
-
-	INSERT INTO [GD1C2021ENTREGA].dbo.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
-
-FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
 END 
 
 CLOSE db_cursor_compra  
