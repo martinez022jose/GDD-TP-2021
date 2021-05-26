@@ -1,10 +1,17 @@
 /* Creacion de la base de datos */
 
---USE GD2015C1
---DROP DATABASE GD1C2021ENTREGA;
---CREATE DATABASE GD1C2021ENTREGA;
-USE GD1C2021ENTREGA;
+--USE GD1C2021
+--DROP DATABASE V1ENTREGA;
+--CREATE DATABASE V1ENTREGA;
+USE V1ENTREGA;
 GO
+/* Creacion de Schemas */
+
+--CREATE SCHEMA FJGD AUTHORIZATION dbo; 
+
+
+
+
 
 /* Creacion de tablas */
 CREATE TABLE Cliente(
@@ -64,7 +71,7 @@ CREATE TABLE Sucursal(
 )
 
 CREATE TABLE Stock(
-	stoc_idStock int NOT NULL,
+	stoc_idStock int identity (1,1) NOT NULL,
 	stoc_idSucursal int NOT NULL,
 	stoc_idCategoria int NOT NULL,
 	stoc_idProducto char(15) NOT NULL,
@@ -140,6 +147,11 @@ GO
 
 ALTER TABLE Cliente ADD CONSTRAINT PK_Cliente PRIMARY KEY(clie_DNI)
 
+/*ALTER TABLE Cliente 
+DROP CONSTRAINT PRIMARY KEY;
+
+drop table dbo.Cliente
+*/
 ALTER TABLE Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
 
 ALTER TABLE Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
@@ -230,7 +242,7 @@ GO
 
 /* Inserts */
 
-INSERT INTO [GD1C2021ENTREGA].dbo.Categoria (cate_idCategoria, cate_Descripcion) VALUES (1,'PC'), (2,'ACCESORIO')
+INSERT INTO [V1ENTREGA].dbo.Categoria (cate_idCategoria, cate_Descripcion) VALUES (1,'PC'), (2,'ACCESORIO')
 GO
 
 /* Migracion */
@@ -265,7 +277,7 @@ FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, 
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Cliente (clie_Apellido, clie_Nombre, clie_DNI, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono)
+	INSERT INTO [V1ENTREGA].dbo.Cliente (clie_Apellido, clie_Nombre, clie_DNI, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono)
 	VALUES (@clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono)
 
 		FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono
@@ -280,6 +292,8 @@ DECLARE @sucu_Ciudad CHAR(50)
 DECLARE @sucu_Direccion CHAR(50)
 DECLARE @sucu_Mail CHAR(50) 
 DECLARE @sucu_Telefono decimal(18, 0)
+
+--DECLARE @errores_Sucursal nvarchar(255)
 
 DECLARE db_cursor_sucursal CURSOR FOR 
 SELECT  
@@ -298,12 +312,14 @@ BEGIN
 	BEGIN 
 				BEGIN TRY
 
-							INSERT INTO [GD1C2021ENTREGA].dbo.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
+							INSERT INTO [V1ENTREGA].dbo.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
 							VALUES (@sucu_Mail, @sucu_Direccion, @sucu_Telefono, @sucu_Ciudad)
 					FETCH NEXT FROM db_cursor_sucursal INTO @sucu_Ciudad, @sucu_Direccion, @sucu_Mail, @sucu_Telefono
 				END TRY
 				BEGIN CATCH 
 					PRINT ERROR_MESSAGE()
+					--SET @errores_Sucursal = @errores_Sucursal + CHAR(13) + CHAR(10) + ERROR_MESSAGE();
+
 				END CATCH
 
 	END 
@@ -311,10 +327,17 @@ END
 
 CLOSE db_cursor_sucursal  
 DEALLOCATE db_cursor_sucursal
-GO
+
+
+
 
 -- Fabricantes
+DELETE FROM dbo.Fabricante
+
+
 DECLARE @fabr_codigo CHAR(30)
+
+DECLARE @errores_Sucursal nvarchar(255) = ''
 
 DECLARE db_cursor_fabricante CURSOR FOR 
 SELECT 
@@ -347,18 +370,21 @@ FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-					INSERT INTO [GD1C2021ENTREGA].dbo.Fabricante(fabr_codigo)
+					INSERT INTO [V1ENTREGA].dbo.Fabricante(fabr_codigo)
 					VALUES (@fabr_codigo)
 
 				FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
 	END TRY
 	BEGIN CATCH 
 			PRINT ERROR_MESSAGE()
+			--SET @errores_Sucursal = @errores_Sucursal + CHAR(13) + CHAR(10) + ERROR_MESSAGE();
 	END CATCH
 END 
-
-CLOSE db_cursor_fabricante  
+PRint @errores_Sucursal  
+CLOSE db_cursor_fabricante
 DEALLOCATE db_cursor_fabricante
+
+
 GO
 
 -- Discos Rigidos
@@ -391,7 +417,7 @@ FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				INSERT INTO [GD1C2021ENTREGA].dbo.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
+				INSERT INTO [V1ENTREGA].dbo.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
 				VALUES (@disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante)
 			FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante
 	END TRY
@@ -434,7 +460,7 @@ FETCH NEXT FROM db_cursor_ram INTO @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_V
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-			INSERT INTO [GD1C2021ENTREGA].dbo.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
+			INSERT INTO [V1ENTREGA].dbo.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
 			VALUES (@ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante)
 
 		FETCH NEXT FROM db_cursor_ram INTO  @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante
@@ -479,7 +505,7 @@ FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				INSERT INTO [GD1C2021ENTREGA].dbo.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
+				INSERT INTO [V1ENTREGA].dbo.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
 				VALUES (@micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante)
 
 			FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante
@@ -524,7 +550,7 @@ FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocida
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN TRY
-				INSERT INTO [GD1C2021ENTREGA].dbo.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
+				INSERT INTO [V1ENTREGA].dbo.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
 				VALUES ( @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante)
 
 		FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante
@@ -551,7 +577,7 @@ DECLARE @pc_idMicro CHAR(15)
 DECLARE @prod_precio decimal(14,2)
 DECLARE @cate_idPc int
 
-SELECT @cate_idPc = cate_idCategoria FROM [GD1C2021ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'PC'
+SELECT @cate_idPc = cate_idCategoria FROM [V1ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'PC'
 
 DECLARE db_cursor_pc CURSOR FOR 
 SELECT 
@@ -583,16 +609,18 @@ FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundid
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-			INSERT INTO [GD1C2021ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
+			INSERT INTO [V1ENTREGA].dbo.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
 			VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
 			-- TODO: Se agrega el 20%
-			INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, 'PC ' + @pc_codigo, @prod_precio + (@prod_precio*0.20)); 
+			INSERT INTO [V1ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, 'PC ' + @pc_codigo, @prod_precio + @prod_precio); 
 
-			FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
 	END TRY
 	BEGIN CATCH
 		PRINT ERROR_MESSAGE()
-	END CATCH	
+	END CATCH
+	
+				FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro, @prod_precio
+
 END 
 
 CLOSE db_cursor_pc  
@@ -605,7 +633,7 @@ DECLARE @acce_descripcion CHAR(50)
 DECLARE @prod_precio decimal(14,2)
 DECLARE @cate_idAc int
 
-SELECT @cate_idAc = cate_idCategoria FROM [GD1C2021ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'ACCESORIO'
+SELECT @cate_idAc = cate_idCategoria FROM [V1ENTREGA].dbo.Categoria WHERE cate_Descripcion = 'ACCESORIO'
 
 DECLARE db_cursor_accesorio CURSOR FOR 
 SELECT 
@@ -622,9 +650,9 @@ FETCH NEXT FROM db_cursor_accesorio INTO @acce_codigo, @acce_descripcion, @prod_
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO [GD1C2021ENTREGA].dbo.Accesorio(acce_idCodigo, acce_Descripcion) VALUES ( @acce_codigo, @acce_descripcion)
+	INSERT INTO [V1ENTREGA].dbo.Accesorio(acce_idCodigo, acce_Descripcion) VALUES ( @acce_codigo, @acce_descripcion)
 	-- TODO: Checkear que el precio seteado sea el correcto
-	INSERT INTO [GD1C2021ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @acce_codigo,  @cate_idAc, @acce_descripcion, @prod_precio); 
+	INSERT INTO [V1ENTREGA].dbo.Producto(prod_codProducto, prod_idCategoria, prod_Decripcion, prod_Precio) VALUES ( @acce_codigo,  @cate_idAc, @acce_descripcion, @prod_precio); 
 
 FETCH NEXT FROM db_cursor_accesorio INTO @acce_codigo, @acce_descripcion, @prod_precio
 END 
@@ -662,8 +690,8 @@ FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @c
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				SELECT @comp_idSucursal = sucu_idSucursal FROM [GD1C2021ENTREGA].dbo.Sucursal WHERE sucu_Mail= @comp_SucursalMail
-				INSERT INTO [GD1C2021ENTREGA].dbo.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
+				SELECT @comp_idSucursal = sucu_idSucursal FROM [V1ENTREGA].dbo.Sucursal WHERE sucu_Mail= @comp_SucursalMail
+				INSERT INTO [V1ENTREGA].dbo.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
 
 	FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
 	END TRY
@@ -719,7 +747,7 @@ BEGIN
 			SELECT @icomp_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'ACCESORIO';
 		END
 
-	INSERT INTO [GD1C2021ENTREGA].dbo.ItemCompra(icomp_idCompra, icomp_idProducto, icomp_idCategoria, icomp_PrecioCompra, icomp_Cantidad) VALUES (@icomp_NumeroCompra, @icomp_idProducto, @icomp_idCategoria, @icomp_PrecioCompra, @icomp_Cantidad)
+	INSERT INTO [V1ENTREGA].dbo.ItemCompra(icomp_idCompra, icomp_idProducto, icomp_idCategoria, icomp_PrecioCompra, icomp_Cantidad) VALUES (@icomp_NumeroCompra, @icomp_idProducto, @icomp_idCategoria, @icomp_PrecioCompra, @icomp_Cantidad)
 
 FETCH NEXT FROM db_cursor_item_compra INTO @icomp_NumeroCompra, @icomp_PrecioCompra, @icomp_Cantidad, @icomp_codPC, @icomp_codAC
 END 
@@ -791,7 +819,7 @@ BEGIN
 	BEGIN
 	IF NOT EXISTS (SELECT fact_Numero FROM Factura WHERE fact_Numero = @fact_NumeroFactura)
 		BEGIN
-		INSERT INTO [GD1C2021ENTREGA].dbo.Factura(fact_Numero, fact_idCliente, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+		INSERT INTO [V1ENTREGA].dbo.Factura(fact_Numero, fact_idCliente, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 		END
 	ELSE
 		BEGIN
@@ -800,7 +828,7 @@ BEGIN
 		END
 	END
 	
-	INSERT INTO GD1C2021ENTREGA.dbo.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
+	INSERT INTO V1ENTREGA.dbo.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
 
 FETCH NEXT FROM db_cursor_item_factura INTO @fact_NumeroFactura,@fact_clieDNI, @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
 END 
@@ -808,3 +836,81 @@ END
 CLOSE db_cursor_item_factura  
 DEALLOCATE db_cursor_item_factura
 GO
+
+/* stock */
+
+DECLARE @stoc_idSucursal int
+
+DECLARE @stoc_SucursalDir char(50)
+DECLARE @stoc_idCategoria int
+DECLARE @stoc_idProducto char(15)
+DECLARE @stoc_Cantidad decimal(10,2)
+--Auxiliares
+DECLARE @tablaVentas TABLE( SUCURSAL_DIR char(50),ACCESORIO_CODIGO char(15),PC_CODIGO char(15),CANTIDAD_VENDIDA int)
+DECLARE @tablaCompras TABLE( SUCURSAL_DIR char(50),ACCESORIO_CODIGO char(15),PC_CODIGO char(15),CANTIDAD_COMPRADA int)
+INSERT INTO @tablaVentas
+
+SELECT [SUCURSAL_DIR],ISNULL(CONVERT(char(15),ACCESORIO_CODIGO),'0'),ISNULL(CONVERT(char(15),PC_CODIGO),'0'), COUNT(*)
+  FROM [GD1C2021].[gd_esquema].[Maestra]
+  WHERE FACTURA_NUMERO IS NOT NULL
+  GROUP BY [SUCURSAL_DIR],ACCESORIO_CODIGO, PC_CODIGO;
+
+INSERT INTO @tablaCompras
+SELECT [SUCURSAL_DIR],ISNULL(CONVERT(char(15),ACCESORIO_CODIGO),'0'),ISNULL(CONVERT(char(15),PC_CODIGO),'0'),COUNT(*)
+  FROM [GD1C2021].[gd_esquema].[Maestra]
+  WHERE COMPRA_NUMERO IS NOT NULL
+  GROUP BY [SUCURSAL_DIR],ACCESORIO_CODIGO,PC_CODIGO;
+
+DECLARE db_cursor_stock CURSOR FOR 
+
+SELECT   C.[SUCURSAL_DIR],
+		prod_idCategoria,
+		CASE 
+			WHEN C.ACCESORIO_CODIGO = '0' THEN C.PC_CODIGO
+			ELSE C.ACCESORIO_CODIGO
+		END AS ID_PRODUCTO,
+		C.CANTIDAD_COMPRADA- V.CANTIDAD_VENDIDA AS STOCK_TOTAL
+FROM     @tablaCompras C
+LEFT JOIN @tablaVentas V
+ON C.SUCURSAL_DIR +C.ACCESORIO_CODIGO+C.PC_CODIGO = V.SUCURSAL_DIR +V.ACCESORIO_CODIGO+V.PC_CODIGO
+--ON C.SUCURSAL_DIR +CONVERT(varchar(255),C.ACCESORIO_CODIGO)+C.PC_CODIGO = V.SUCURSAL_DIR +CONVERT(varchar(255),V.ACCESORIO_CODIGO)+V.PC_CODIGO
+join Producto
+ON C.ACCESORIO_CODIGO=prod_codProducto OR C.PC_CODIGO = prod_codProducto
+--ORDER BY C.SUCURSAL_DIR
+
+--(C.SUCURSAL_DIR = V.SUCURSAL_DIR) --and C.ACCESORIO_CODIGO = V.ACCESORIO_CODIGO AND C.PC_CODIGO = V.PC_CODIGO)
+
+
+OPEN db_cursor_stock  
+FETCH NEXT FROM db_cursor_stock INTO @stoc_SucursalDir, @stoc_idCategoria, @stoc_idProducto, @stoc_Cantidad
+
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	BEGIN TRY
+
+				SELECT @stoc_idSucursal = sucu_idSucursal FROM [V1ENTREGA].dbo.Sucursal WHERE sucu_Direccion = @stoc_SucursalDir 
+				INSERT INTO [V1ENTREGA].dbo.Stock(stoc_idSucursal, stoc_idCategoria,stoc_idProducto,stoc_Cantidad) 
+					VALUES ( @stoc_idSucursal, @stoc_idCategoria, @stoc_idProducto, @stoc_Cantidad)
+
+	END TRY
+	BEGIN CATCH
+		PRINT ERROR_MESSAGE()
+	END CATCH
+	
+FETCH NEXT FROM db_cursor_stock INTO @stoc_SucursalDir, @stoc_idCategoria, @stoc_idProducto, @stoc_Cantidad
+
+END 
+
+CLOSE db_cursor_stock
+DEALLOCATE db_cursor_stock
+GO
+/*
+DECLARE @stoc_idSucursal int
+
+SELECT @stoc_idSucursal = sucu_idSucursal FROM [V1ENTREGA].dbo.Sucursal WHERE sucu_Mail= '
+	*/			
+--idStock identity
+
+-try catch
+-der
+-
