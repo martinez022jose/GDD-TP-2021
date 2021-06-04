@@ -1,13 +1,13 @@
 
---USE GD1C2021
+
 --go
 /* Creacion de Schemas */
---CREATE SCHEMA FJGD_sql AUTHORIZATION dbo; 
---GO 
+CREATE SCHEMA FJGD;
+GO 
 
 
 /* Creacion de tablas */
-CREATE TABLE FJGD_sql.Cliente(
+CREATE TABLE FJGD.Cliente(
 	clie_DNI varchar(15) NOT NULL,
 	clie_Apellido varchar(30) NOT NULL,
 	clie_Nombre varchar(30) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE FJGD_sql.Cliente(
 	clie_telefono varchar(50) NULL
 )
 
-CREATE TABLE FJGD_sql.Factura(
+CREATE TABLE FJGD.Factura(
 	fact_Numero decimal(18, 0) NOT NULL,
 	fact_clieDNI varchar(15) NOT NULL,
 	fact_clieApellido varchar(30) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE FJGD_sql.Factura(
 	fact_Total decimal(14,2) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.ItemFactura(
+CREATE TABLE FJGD.ItemFactura(
 	ifact_FacturaNumero decimal(18, 0) NOT NULL,
 	ifact_idProducto varchar(15) NOT NULL,
 	ifact_idCategoria int NOT NULL,
@@ -34,14 +34,14 @@ CREATE TABLE FJGD_sql.ItemFactura(
 	ifact_PrecioProducto decimal(14,2) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Compra(
+CREATE TABLE FJGD.Compra(
 	comp_NumeroCompra varchar(15) NOT NULL,
 	comp_idSucursal int NOT NULL,
 	comp_FechaCompra smalldatetime NOT NULL,
 	comp_GastoTotal decimal(14,2) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.ItemCompra(
+CREATE TABLE FJGD.ItemCompra(
 	icomp_NumeroCompra varchar(15) NOT NULL,
 	icomp_idProducto varchar(15) NOT NULL,
 	icomp_idCategoria int NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE FJGD_sql.ItemCompra(
 	icomp_Cantidad decimal(10,2)
 )
 
-CREATE TABLE FJGD_sql.Sucursal(
+CREATE TABLE FJGD.Sucursal(
 	sucu_idSucursal int IDENTITY(1,1)  NOT NULL,
 	sucu_Mail varchar(50) NULL,
 	sucu_Direccion varchar(50) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE FJGD_sql.Sucursal(
 	sucu_Ciudad varchar(50) NULL
 )
 
-CREATE TABLE FJGD_sql.Stock(
+CREATE TABLE FJGD.Stock(
 	stoc_idStock int identity (1,1) NOT NULL,
 	stoc_idSucursal int NOT NULL,
 	stoc_idCategoria int NOT NULL,
@@ -65,23 +65,23 @@ CREATE TABLE FJGD_sql.Stock(
 	stoc_Cantidad decimal(10,2)
 )
 
-CREATE TABLE FJGD_sql.Producto(
+CREATE TABLE FJGD.Producto(
 	prod_codProducto varchar(15) NOT NULL,
 	prod_idCategoria int NOT NULL,
 	prod_Precio decimal(14,2) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Categoria(
+CREATE TABLE FJGD.Categoria(
 	cate_idCategoria int NOT NULL,
 	cate_Descripcion  varchar(15) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Accesorio(
+CREATE TABLE FJGD.Accesorio(
 	acce_idCodigo varchar(15) NOT NULL,
 	acce_Descripcion varchar(50) NULL
 )
 
-CREATE TABLE FJGD_sql.PC(
+CREATE TABLE FJGD.PC(
 	pc_idCodigo varchar(15) NOT NULL,
 	pc_alto varchar(15) NOT NULL,
 	pc_ancho varchar(15) NOT NULL,
@@ -92,11 +92,11 @@ CREATE TABLE FJGD_sql.PC(
 	pc_idDisco varchar(15) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Fabricante(
+CREATE TABLE FJGD.Fabricante(
 	fabr_codigo varchar(30) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.RAM(
+CREATE TABLE FJGD.RAM(
 	ram_idRam varchar(15) NOT NULL,
 	ram_Tipo varchar(20) NOT NULL,
 	ram_Capacidad varchar(30) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE FJGD_sql.RAM(
 	ram_idFabricante varchar(30) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Micro(
+CREATE TABLE FJGD.Micro(
 	micr_idMicro varchar(15) NOT NULL,
 	micr_Cache varchar(20) NOT NULL,
 	micr_CantHilos varchar(5) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE FJGD_sql.Micro(
 	micr_idFabricante varchar(30) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Video(
+CREATE TABLE FJGD.Video(
 	vide_Chipset varchar(30) NOT NULL,
 	vide_Capacidad varchar(30) NOT NULL,
 	vide_Velocidad varchar(30) NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE FJGD_sql.Video(
 	vide_idFabricante varchar(30) NOT NULL
 )
 
-CREATE TABLE FJGD_sql.Disco(
+CREATE TABLE FJGD.Disco(
 	disc_idDisco varchar(15) NOT NULL,
 	disc_tipo varchar(30) NOT NULL,
 	disc_capacidad varchar(30) NOT NULL,
@@ -131,97 +131,97 @@ GO
 
 /* Primaries key */
 
-ALTER TABLE FJGD_sql.Cliente ADD CONSTRAINT PK_Cliente PRIMARY KEY(clie_DNI,clie_Nombre,clie_Apellido)
+ALTER TABLE FJGD.Cliente ADD CONSTRAINT PK_Cliente PRIMARY KEY(clie_DNI,clie_Nombre,clie_Apellido)
 
-ALTER TABLE FJGD_sql.Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
+ALTER TABLE FJGD.Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCategoria)
 
-ALTER TABLE FJGD_sql.Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
+ALTER TABLE FJGD.Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
 
-ALTER TABLE FJGD_sql.Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
+ALTER TABLE FJGD.Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
 
-ALTER TABLE FJGD_sql.ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria)
+ALTER TABLE FJGD.ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria)
 
-ALTER TABLE FJGD_sql.Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_NumeroCompra)
+ALTER TABLE FJGD.Compra ADD CONSTRAINT PK_Compra PRIMARY KEY(comp_NumeroCompra)
 
-ALTER TABLE FJGD_sql.ItemCompra ADD CONSTRAINT PK_ItemCompra PRIMARY KEY(icomp_NumeroCompra, icomp_idProducto)
+ALTER TABLE FJGD.ItemCompra ADD CONSTRAINT PK_ItemCompra PRIMARY KEY(icomp_NumeroCompra, icomp_idProducto)
 
-ALTER TABLE FJGD_sql.Sucursal ADD CONSTRAINT PK_Sucursal PRIMARY KEY (sucu_idSucursal)
+ALTER TABLE FJGD.Sucursal ADD CONSTRAINT PK_Sucursal PRIMARY KEY (sucu_idSucursal)
 
-ALTER TABLE FJGD_sql.Stock ADD CONSTRAINT PK_Stock PRIMARY KEY (stoc_idStock)
+ALTER TABLE FJGD.Stock ADD CONSTRAINT PK_Stock PRIMARY KEY (stoc_idStock)
 
-ALTER TABLE FJGD_sql.Accesorio ADD CONSTRAINT PK_Accesorio PRIMARY KEY (acce_idCodigo)
+ALTER TABLE FJGD.Accesorio ADD CONSTRAINT PK_Accesorio PRIMARY KEY (acce_idCodigo)
 
-ALTER TABLE FJGD_sql.PC ADD CONSTRAINT PK_PC PRIMARY KEY (pc_idCodigo)
+ALTER TABLE FJGD.PC ADD CONSTRAINT PK_PC PRIMARY KEY (pc_idCodigo)
 
-ALTER TABLE FJGD_sql.RAM ADD CONSTRAINT PK_RAM PRIMARY KEY (ram_idRam)
+ALTER TABLE FJGD.RAM ADD CONSTRAINT PK_RAM PRIMARY KEY (ram_idRam)
 
-ALTER TABLE FJGD_sql.Micro ADD CONSTRAINT PK_Micro PRIMARY KEY (micr_idMicro)
+ALTER TABLE FJGD.Micro ADD CONSTRAINT PK_Micro PRIMARY KEY (micr_idMicro)
 
-ALTER TABLE FJGD_sql.Video ADD CONSTRAINT PK_Video PRIMARY KEY (vide_Modelo)
+ALTER TABLE FJGD.Video ADD CONSTRAINT PK_Video PRIMARY KEY (vide_Modelo)
 
-ALTER TABLE FJGD_sql.Disco ADD CONSTRAINT PK_Disco PRIMARY KEY (disc_idDisco)
+ALTER TABLE FJGD.Disco ADD CONSTRAINT PK_Disco PRIMARY KEY (disc_idDisco)
 
-ALTER TABLE FJGD_sql.Fabricante ADD CONSTRAINT PK_Fabricante PRIMARY KEY (fabr_codigo)
+ALTER TABLE FJGD.Fabricante ADD CONSTRAINT PK_Fabricante PRIMARY KEY (fabr_codigo)
 GO
 
 /* Foreings key */
-ALTER TABLE Factura
+ALTER TABLE FJGD.Factura
 ADD 
-	CONSTRAINT FK_FacturaCliente FOREIGN KEY(fact_clieDNI,fact_clieNombre, fact_clieApellido) REFERENCES Cliente(clie_DNI,clie_Nombre,clie_Apellido)
+	CONSTRAINT FK_FacturaCliente FOREIGN KEY(fact_clieDNI,fact_clieNombre, fact_clieApellido) REFERENCES FJGD.Cliente(clie_DNI,clie_Nombre,clie_Apellido)
 	--clie_Nombre, clie_Apellido
 
-ALTER TABLE ItemFactura
+ALTER TABLE FJGD.ItemFactura
 ADD 
-	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_FacturaNumero) REFERENCES Factura(fact_Numero),
-	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto, ifact_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
+	CONSTRAINT FK_ItemFacturaFactura FOREIGN KEY(ifact_FacturaNumero) REFERENCES FJGD.Factura(fact_Numero),
+	CONSTRAINT FK_ItemFacturaProducto FOREIGN KEY (ifact_idProducto, ifact_idCategoria) REFERENCES FJGD.Producto(prod_codProducto, prod_idCategoria)
 
-ALTER TABLE Compra
+ALTER TABLE FJGD.Compra
 ADD
-	CONSTRAINT FK_CompraSucursal FOREIGN KEY (comp_idSucursal) REFERENCES Sucursal(sucu_idSucursal)
+	CONSTRAINT FK_CompraSucursal FOREIGN KEY (comp_idSucursal) REFERENCES FJGD.Sucursal(sucu_idSucursal)
 
-ALTER TABLE ItemCompra
+ALTER TABLE FJGD.ItemCompra
 ADD 
-	CONSTRAINT FK_ItemCompraCompra FOREIGN KEY (icomp_NumeroCompra) REFERENCES Compra(comp_NumeroCompra),
-	CONSTRAINT FK_ItemCompraProducto FOREIGN KEY (icomp_idProducto, icomp_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
+	CONSTRAINT FK_ItemCompraCompra FOREIGN KEY (icomp_NumeroCompra) REFERENCES FJGD.Compra(comp_NumeroCompra),
+	CONSTRAINT FK_ItemCompraProducto FOREIGN KEY (icomp_idProducto, icomp_idCategoria) REFERENCES FJGD.Producto(prod_codProducto, prod_idCategoria)
 
 
-ALTER TABLE Stock
+ALTER TABLE FJGD.Stock
 ADD 
-	CONSTRAINT FK_StockSucursal FOREIGN KEY (stoc_idSucursal) REFERENCES Sucursal(sucu_idSucursal),
-	CONSTRAINT FK_StockProducto FOREIGN KEY (stoc_idProducto, stoc_idCategoria) REFERENCES Producto(prod_codProducto, prod_idCategoria)
+	CONSTRAINT FK_StockSucursal FOREIGN KEY (stoc_idSucursal) REFERENCES FJGD.Sucursal(sucu_idSucursal),
+	CONSTRAINT FK_StockProducto FOREIGN KEY (stoc_idProducto, stoc_idCategoria) REFERENCES FJGD.Producto(prod_codProducto, prod_idCategoria)
 
-ALTER TABLE Producto
+ALTER TABLE FJGD.Producto
 ADD
-	CONSTRAINT FK_ProductoCategoria FOREIGN KEY (prod_idCategoria) REFERENCES Categoria(cate_idCategoria)
+	CONSTRAINT FK_ProductoCategoria FOREIGN KEY (prod_idCategoria) REFERENCES FJGD.Categoria(cate_idCategoria)
 
 
-ALTER TABLE PC
+ALTER TABLE FJGD.PC
 ADD
-	CONSTRAINT FK_PCRAM FOREIGN KEY (pc_idRam ) REFERENCES RAM(ram_idRam),
-	CONSTRAINT FK_PCMicro FOREIGN KEY (pc_idMicro ) REFERENCES Micro(micr_idMicro),
-	CONSTRAINT FK_PCVideo FOREIGN KEY (pc_idVideo) REFERENCES Video(vide_Modelo),
-	CONSTRAINT FK_PCDisco FOREIGN KEY (pc_idDisco) REFERENCES Disco(disc_idDisco)
+	CONSTRAINT FK_PCRAM FOREIGN KEY (pc_idRam ) REFERENCES FJGD.RAM(ram_idRam),
+	CONSTRAINT FK_PCMicro FOREIGN KEY (pc_idMicro ) REFERENCES FJGD.Micro(micr_idMicro),
+	CONSTRAINT FK_PCVideo FOREIGN KEY (pc_idVideo) REFERENCES FJGD.Video(vide_Modelo),
+	CONSTRAINT FK_PCDisco FOREIGN KEY (pc_idDisco) REFERENCES FJGD.Disco(disc_idDisco)
 
-ALTER TABLE RAM
+ALTER TABLE FJGD.RAM
 ADD 
-	CONSTRAINT FK_RAMFabricante FOREIGN KEY (ram_idFabricante) REFERENCES Fabricante(fabr_codigo)
+	CONSTRAINT FK_RAMFabricante FOREIGN KEY (ram_idFabricante) REFERENCES FJGD.Fabricante(fabr_codigo)
 
-ALTER TABLE Micro
+ALTER TABLE FJGD.Micro
 ADD 
-	CONSTRAINT FK_MicroFabricante FOREIGN KEY (micr_idFabricante) REFERENCES Fabricante(fabr_codigo)
+	CONSTRAINT FK_MicroFabricante FOREIGN KEY (micr_idFabricante) REFERENCES FJGD.Fabricante(fabr_codigo)
 
-ALTER TABLE Video
+ALTER TABLE FJGD.Video
 ADD 
-	CONSTRAINT FK_VideoFabricante FOREIGN KEY (vide_idFabricante) REFERENCES Fabricante(fabr_codigo)
+	CONSTRAINT FK_VideoFabricante FOREIGN KEY (vide_idFabricante) REFERENCES FJGD.Fabricante(fabr_codigo)
 
-ALTER TABLE Disco
+ALTER TABLE FJGD.Disco
 ADD 
-	CONSTRAINT FK_DiscoFabricante FOREIGN KEY (disc_idFabricante) REFERENCES Fabricante(fabr_codigo)
+	CONSTRAINT FK_DiscoFabricante FOREIGN KEY (disc_idFabricante) REFERENCES FJGD.Fabricante(fabr_codigo)
 GO
 
 /* Inserts */
 
-INSERT INTO Categoria (cate_idCategoria, cate_Descripcion) VALUES (1,'PC'), (2,'ACCESORIO')
+INSERT INTO FJGD.Categoria (cate_idCategoria, cate_Descripcion) VALUES (1,'PC'), (2,'ACCESORIO')
 GO
 
 /* Migracion */
@@ -245,7 +245,7 @@ SELECT
 	CLIENTE_FECHA_NACIMIENTO,
 	CLIENTE_MAIL,
 	CLIENTE_TELEFONO
-FROM GD1C2021.gd_esquema.Maestra
+FROM gd_esquema.Maestra
 WHERE CLIENTE_DNI IS NOT NULL
 ORDER BY CLIENTE_DNI,CLIENTE_NOMBRE, CLIENTE_APELLIDO
 
@@ -255,7 +255,7 @@ FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, 
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	INSERT INTO FJGD_sql.Cliente (clie_Apellido, clie_Nombre, clie_DNI, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono)
+	INSERT INTO FJGD.Cliente (clie_Apellido, clie_Nombre, clie_DNI, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono)
 	VALUES (@clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono)
 
 		FETCH NEXT FROM db_cursor_cliente INTO @clie_Apellido, @clie_Nombre, @clie_DNI, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono
@@ -276,7 +276,7 @@ SELECT
 	SUCURSAL_DIR,
 	SUCURSAL_MAIL,
 	SUCURSAL_TEL
-FROM GD1C2021.gd_esquema.Maestra
+FROM gd_esquema.Maestra
 GROUP BY CIUDAD, SUCURSAL_DIR, SUCURSAL_MAIL, SUCURSAL_TEL;
 
 OPEN db_cursor_sucursal  
@@ -286,7 +286,7 @@ WHILE @@FETCH_STATUS = 0
 BEGIN
 	BEGIN
 				BEGIN TRY
-							INSERT INTO FJGD_sql.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
+							INSERT INTO FJGD.Sucursal(sucu_Mail, sucu_Direccion, sucu_Telefono, sucu_Ciudad)
 							VALUES (@sucu_Mail, @sucu_Direccion, @sucu_Telefono, @sucu_Ciudad)
 					
 				END TRY
@@ -302,38 +302,34 @@ CLOSE db_cursor_sucursal
 DEALLOCATE db_cursor_sucursal
 
 
-
-
 -- Fabricantes
-DELETE FROM dbo.Fabricante
-
+--DELETE FROM dbo.Fabricante
 
 DECLARE @fabr_codigo varchar(30)
-
 DECLARE @errores_Sucursal nvarchar(255) = ''
 
 DECLARE db_cursor_fabricante CURSOR FOR 
 SELECT 
 	[DISCO_RIGIDO_FABRICANTE] AS fabricante
-    FROM GD1C2021.[gd_esquema].[Maestra]
+    FROM gd_esquema.Maestra
 	WHERE DISCO_RIGIDO_FABRICANTE IS NOT NULL
 	GROUP BY DISCO_RIGIDO_FABRICANTE
 UNION
 SELECT
 	[MEMORIA_RAM_FABRICANTE] AS fabricante
-    FROM GD1C2021.[gd_esquema].[Maestra]
+    FROM gd_esquema.Maestra
 	WHERE [MEMORIA_RAM_FABRICANTE] IS NOT NULL
 	GROUP BY [MEMORIA_RAM_FABRICANTE]
 	UNION
 SELECT
 	[MICROPROCESADOR_FABRICANTE] AS fabricante
-    FROM GD1C2021.[gd_esquema].[Maestra]
+    FROM gd_esquema.Maestra
 	WHERE [MICROPROCESADOR_FABRICANTE] IS NOT NULL
 	GROUP BY [MICROPROCESADOR_FABRICANTE]
 	  	UNION
 SELECT
 	[PLACA_VIDEO_FABRICANTE] AS fabricante
-    FROM GD1C2021.[gd_esquema].[Maestra]
+    FROM gd_esquema.Maestra
 	    WHERE [PLACA_VIDEO_FABRICANTE] IS NOT NULL
 	GROUP BY [PLACA_VIDEO_FABRICANTE]
 
@@ -343,7 +339,7 @@ FETCH NEXT FROM db_cursor_fabricante INTO @fabr_codigo
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-					INSERT INTO FJGD_sql.Fabricante(fabr_codigo)
+					INSERT INTO FJGD.Fabricante(fabr_codigo)
 					VALUES (@fabr_codigo)
 
 				
@@ -375,7 +371,7 @@ SELECT
 	DISCO_RIGIDO_CAPACIDAD,
 	DISCO_RIGIDO_VELOCIDAD,
 	DISCO_RIGIDO_FABRICANTE
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE [DISCO_RIGIDO_CODIGO] IS NOT NULL
 	GROUP BY 
 	DISCO_RIGIDO_CODIGO,
@@ -390,7 +386,7 @@ FETCH NEXT FROM db_cursor_disco INTO @disc_Codigo, @disc_Tipo, @disc_Capacidad, 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				INSERT INTO FJGD_sql.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
+				INSERT INTO FJGD.Disco(disc_idDisco, disc_tipo, disc_capacidad, disc_velocidad, disc_idFabricante)
 				VALUES (@disc_Codigo, @disc_Tipo, @disc_Capacidad, @disc_Velocidad, @disc_Fabricante)
 			
 	END TRY
@@ -419,7 +415,7 @@ SELECT
 	MEMORIA_RAM_CAPACIDAD,
 	MEMORIA_RAM_VELOCIDAD,
 	MEMORIA_RAM_FABRICANTE
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE MEMORIA_RAM_CODIGO IS NOT NULL
 	GROUP BY 
 	MEMORIA_RAM_CODIGO,
@@ -434,7 +430,7 @@ FETCH NEXT FROM db_cursor_ram INTO @ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_V
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-			INSERT INTO FJGD_sql.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
+			INSERT INTO FJGD.RAM(ram_idRam, ram_Tipo, ram_Capacidad, ram_Velocidad ,ram_idFabricante)
 			VALUES (@ram_idRam, @ram_Tipo, @ram_Capacidad, @ram_Velocidad, @ram_Fabricante)
 
 	END TRY
@@ -464,7 +460,7 @@ SELECT
 	MICROPROCESADOR_CANT_HILOS,
 	MICROPROCESADOR_VELOCIDAD,
 	MICROPROCESADOR_FABRICANTE
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE MICROPROCESADOR_CODIGO IS NOT NULL
 	GROUP BY 
 	MICROPROCESADOR_CODIGO,
@@ -479,7 +475,7 @@ FETCH NEXT FROM db_cursor_micro INTO @micr_idRam, @micr_Cache, @micr_CantHilos, 
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				INSERT INTO FJGD_sql.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
+				INSERT INTO FJGD.Micro(micr_idMicro, micr_Cache, micr_CantHilos, micr_Velocidad, micr_idFabricante)
 				VALUES (@micr_idRam, @micr_Cache, @micr_CantHilos, @micr_Velocidad, @micr_idFabricante)
 
 	END TRY
@@ -509,7 +505,7 @@ SELECT
 	PLACA_VIDEO_VELOCIDAD,
 	PLACA_VIDEO_CAPACIDAD,
 	PLACA_VIDEO_FABRICANTE
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE PLACA_VIDEO_MODELO IS NOT NULL
 	GROUP BY 
 	PLACA_VIDEO_MODELO,
@@ -524,7 +520,7 @@ FETCH NEXT FROM db_cursor_video INTO @vide_Modelo, @vide_Chipset, @vide_Velocida
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN TRY
-				INSERT INTO FJGD_sql.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
+				INSERT INTO FJGD.Video(vide_Modelo, vide_Chipset, vide_Velocidad, vide_Capacidad, vide_idFabricante)
 				VALUES ( @vide_Modelo, @vide_Chipset, @vide_Velocidad, @vide_Capacidad, @vide_idFabricante)
 
 		
@@ -552,7 +548,7 @@ DECLARE @pc_idMicro varchar(15)
 DECLARE @prod_precio decimal(14,2)
 DECLARE @cate_idPc int
 
-SELECT @cate_idPc = cate_idCategoria FROM FJGD_sql.Categoria WHERE cate_Descripcion = 'PC'
+SELECT @cate_idPc = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'PC'
 
 DECLARE db_cursor_pc CURSOR FOR 
 SELECT 
@@ -565,7 +561,7 @@ SELECT
 	DISCO_RIGIDO_CODIGO,
 	MICROPROCESADOR_CODIGO,
 	COMPRA_PRECIO
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE COMPRA_PRECIO IS NOT NULL AND PC_CODIGO IS NOT NULL 
 	GROUP BY 
 	PC_CODIGO,
@@ -584,9 +580,9 @@ FETCH NEXT FROM db_cursor_pc INTO @pc_codigo, @pc_alto, @pc_ancho, @pc_profundid
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-			INSERT INTO FJGD_sql.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
+			INSERT INTO FJGD.PC(pc_idCodigo, pc_alto, pc_ancho, pc_profundida, pc_idRam, pc_idVideo, pc_idDisco, pc_idMicro)
 			VALUES ( @pc_codigo, @pc_alto, @pc_ancho, @pc_profundidad, @pc_idRam, @pc_idVideo, @pc_idDisco, @pc_idMicro)
-			INSERT INTO FJGD_sql.Producto(prod_codProducto, prod_idCategoria, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, @prod_precio + (@prod_precio * 0.20)); 
+			INSERT INTO FJGD.Producto(prod_codProducto, prod_idCategoria, prod_Precio) VALUES ( @pc_codigo,  @cate_idPc, @prod_precio + (@prod_precio * 0.20)); 
 
 	END TRY
 	BEGIN CATCH
@@ -607,14 +603,14 @@ DECLARE @acce_descripcion varchar(50)
 DECLARE @prod_precio decimal(14,2)
 DECLARE @cate_idAc int
 
-SELECT @cate_idAc = cate_idCategoria FROM FJGD_sql.Categoria WHERE cate_Descripcion = 'ACCESORIO'
+SELECT @cate_idAc = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'ACCESORIO'
 
 DECLARE db_cursor_accesorio CURSOR FOR 
 SELECT 
 	ACCESORIO_CODIGO,
 	AC_DESCRIPCION,
 	COMPRA_PRECIO
-  FROM GD1C2021.[gd_esquema].[Maestra]
+  FROM gd_esquema.Maestra
   WHERE COMPRA_PRECIO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
   GROUP BY ACCESORIO_CODIGO, AC_DESCRIPCION, COMPRA_PRECIO
 
@@ -625,8 +621,8 @@ FETCH NEXT FROM db_cursor_accesorio INTO @acce_codigo, @acce_descripcion, @prod_
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-		INSERT INTO FJGD_sql.Accesorio(acce_idCodigo, acce_Descripcion) VALUES ( @acce_codigo, @acce_descripcion)
-		INSERT INTO FJGD_sql.Producto(prod_codProducto, prod_idCategoria, prod_Precio) VALUES ( @acce_codigo,  @cate_idAc, @prod_precio);
+		INSERT INTO FJGD.Accesorio(acce_idCodigo, acce_Descripcion) VALUES ( @acce_codigo, @acce_descripcion)
+		INSERT INTO FJGD.Producto(prod_codProducto, prod_idCategoria, prod_Precio) VALUES ( @acce_codigo,  @cate_idAc, @prod_precio);
 	END TRY
 	BEGIN CATCH
 		PRINT ERROR_MESSAGE()
@@ -654,7 +650,7 @@ INSERT INTO @Tabla_COMPRA
 				SUCURSAL_MAIL,
 				COMPRA_FECHA,
 				COMPRA_PRECIO * SUM(COMPRA_CANTIDAD) AS COMPRA_Monto_Subtotal
-			  FROM GD1C2021.[gd_esquema].[Maestra]
+			  FROM gd_esquema.Maestra
 			  where COMPRA_NUMERO IS NOT NULL
 			  GROUP BY 
 				SUCURSAL_MAIL,
@@ -674,8 +670,8 @@ FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @c
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-				SELECT @comp_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Mail= @comp_SucursalMail
-				INSERT INTO FJGD_sql.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
+				SELECT @comp_idSucursal = sucu_idSucursal FROM FJGD.Sucursal WHERE sucu_Mail= @comp_SucursalMail
+				INSERT INTO FJGD.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
 
 	END TRY
 	BEGIN CATCH
@@ -706,7 +702,7 @@ SELECT
 	  SUM([COMPRA_CANTIDAD]) AS Cantidad,
 	  [PC_CODIGO],
 	  [ACCESORIO_CODIGO]
-  FROM GD1C2021.[gd_esquema].[Maestra]
+  FROM gd_esquema.Maestra
   WHERE COMPRA_NUMERO IS NOT NULL
   GROUP BY
 	  [COMPRA_NUMERO],
@@ -723,15 +719,15 @@ BEGIN
 				IF @icomp_codPC IS NOT NULL
 				BEGIN
 					SELECT @icomp_idProducto = @icomp_codPC;
-					SELECT @icomp_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'PC';
+					SELECT @icomp_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'PC';
 				END
 				ELSE
 				BEGIN 
 					SELECT @icomp_idProducto = @icomp_codAC;
-					SELECT @icomp_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'ACCESORIO';
+					SELECT @icomp_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'ACCESORIO';
 				END
 
-				INSERT INTO FJGD_sql.ItemCompra(icomp_NumeroCompra, icomp_idProducto, icomp_idCategoria, icomp_PrecioCompra, icomp_Cantidad) VALUES (@icomp_NumeroCompra, @icomp_idProducto, @icomp_idCategoria, @icomp_PrecioCompra, @icomp_Cantidad)
+				INSERT INTO FJGD.ItemCompra(icomp_NumeroCompra, icomp_idProducto, icomp_idCategoria, icomp_PrecioCompra, icomp_Cantidad) VALUES (@icomp_NumeroCompra, @icomp_idProducto, @icomp_idCategoria, @icomp_PrecioCompra, @icomp_Cantidad)
 
 	END TRY
 	BEGIN CATCH
@@ -778,7 +774,7 @@ SELECT
 		ACCESORIO_CODIGO,
 		COUNT(PC_CODIGO) AS total_pc_vendido,
 		COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
-	FROM GD1C2021.[gd_esquema].[Maestra]
+	FROM gd_esquema.Maestra
 	WHERE FACTURA_NUMERO IS NOT NULL
 	GROUP BY 
 		FACTURA_NUMERO,
@@ -799,23 +795,23 @@ BEGIN
 			IF @ifact_PC IS NOT NULL
 			BEGIN
 				SELECT @ifact_idProducto = @ifact_PC;
-				SELECT @ifact_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'PC'
+				SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'PC'
 				SELECT @ifact_Cantidad = @ifact_PC_total
-				SELECT @ifact_PrecioProducto = prod_Precio FROM Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
+				SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
 			END
 		ELSE
 			BEGIN 
 				SELECT @ifact_idProducto = @ifact_AC;
-				SELECT @ifact_idCategoria = cate_idCategoria FROM Categoria WHERE cate_Descripcion = 'ACCESORIO'
+				SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'ACCESORIO'
 				SELECT @ifact_Cantidad = @ifact_AC_total
-				SELECT @ifact_PrecioProducto = prod_Precio FROM Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
+				SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
 			END
 
 
 		BEGIN
-		IF NOT EXISTS (SELECT fact_Numero FROM Factura WHERE fact_Numero = @fact_NumeroFactura)
+		IF NOT EXISTS (SELECT fact_Numero FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura)
 			BEGIN
-			INSERT INTO FJGD_sql.Factura(fact_Numero, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+			INSERT INTO FJGD.Factura(fact_Numero, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 			END
 		ELSE
 			BEGIN
@@ -824,7 +820,7 @@ BEGIN
 			END
 		END
 	
-		INSERT INTO FJGD_sql.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
+		INSERT INTO FJGD.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
 	END TRY
 	BEGIN CATCH
 	END CATCH
@@ -850,13 +846,13 @@ DECLARE @tablaCompras TABLE( SUCURSAL_DIR varchar(50),ACCESORIO_CODIGO varchar(1
 INSERT INTO @tablaVentas
 
 SELECT [SUCURSAL_DIR],ISNULL(CONVERT(varchar(15),ACCESORIO_CODIGO),'0'),ISNULL(CONVERT(varchar(15),PC_CODIGO),'0'), COUNT(*)
-  FROM GD1C2021.[gd_esquema].[Maestra]
+  FROM gd_esquema.Maestra
   WHERE FACTURA_NUMERO IS NOT NULL
   GROUP BY [SUCURSAL_DIR],ACCESORIO_CODIGO, PC_CODIGO;
 
 INSERT INTO @tablaCompras
 SELECT [SUCURSAL_DIR],ISNULL(CONVERT(varchar(15),ACCESORIO_CODIGO),'0'),ISNULL(CONVERT(varchar(15),PC_CODIGO),'0'),COUNT(*)
-  FROM GD1C2021.[gd_esquema].[Maestra]
+  FROM gd_esquema.Maestra
   WHERE COMPRA_NUMERO IS NOT NULL
   GROUP BY [SUCURSAL_DIR],ACCESORIO_CODIGO,PC_CODIGO;
 
@@ -872,7 +868,7 @@ SELECT   C.[SUCURSAL_DIR],
 FROM     @tablaCompras C
 LEFT JOIN @tablaVentas V
 ON C.SUCURSAL_DIR +C.ACCESORIO_CODIGO+C.PC_CODIGO = V.SUCURSAL_DIR +V.ACCESORIO_CODIGO+V.PC_CODIGO
-join Producto
+join FJGD.Producto
 ON C.ACCESORIO_CODIGO=prod_codProducto OR C.PC_CODIGO = prod_codProducto
 
 OPEN db_cursor_stock  
@@ -882,8 +878,8 @@ WHILE @@FETCH_STATUS = 0
 BEGIN  
 	BEGIN TRY
 
-				SELECT @stoc_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Direccion = @stoc_SucursalDir 
-				INSERT INTO FJGD_sql.Stock(stoc_idSucursal, stoc_idCategoria,stoc_idProducto,stoc_Cantidad) 
+				SELECT @stoc_idSucursal = sucu_idSucursal FROM FJGD.Sucursal WHERE sucu_Direccion = @stoc_SucursalDir 
+				INSERT INTO FJGD.Stock(stoc_idSucursal, stoc_idCategoria,stoc_idProducto,stoc_Cantidad) 
 				VALUES ( @stoc_idSucursal, @stoc_idCategoria, @stoc_idProducto, @stoc_Cantidad)
 
 	END TRY
