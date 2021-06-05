@@ -19,9 +19,9 @@ CREATE TABLE FJGD.Cliente(
 
 CREATE TABLE FJGD.Factura(
 	fact_Numero decimal(18, 0) NOT NULL,
-	fact_clieDNI varchar(15) NOT NULL,
-	fact_clieApellido varchar(30) NOT NULL,
-	fact_clieNombre varchar(30) NOT NULL,
+	fact_clieDNI varchar(15) NULL,
+	fact_clieApellido varchar(30)NULL,
+	fact_clieNombre varchar(30) NULL,
 	fact_fecha smalldatetime NOT NULL,
 	fact_Total decimal(14,2) NOT NULL
 )
@@ -137,7 +137,7 @@ ALTER TABLE FJGD.Categoria ADD CONSTRAINT PK_Categria PRIMARY KEY (cate_idCatego
 
 ALTER TABLE FJGD.Producto ADD CONSTRAINT PK_Producto PRIMARY KEY (prod_codProducto, prod_idCategoria)
 
-ALTER TABLE FJGD.Factura ADD	CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
+ALTER TABLE FJGD.Factura ADD CONSTRAINT PK_Factura PRIMARY KEY(fact_Numero)
 
 ALTER TABLE FJGD.ItemFactura ADD CONSTRAINT PK_ItemFactura PRIMARY KEY(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria)
 
@@ -741,7 +741,7 @@ CLOSE db_cursor_item_compra
 DEALLOCATE db_cursor_item_compra
 GO
 
--- Factura / Item Factura
+-- Factura / Item Factura / PC
  
 DECLARE @fact_NumeroFactura decimal(18,0)
 DECLARE @fact_clieDNI varchar(15)
@@ -755,15 +755,13 @@ DECLARE @ifact_Cantidad decimal(10,2)
 DECLARE @ifact_PrecioProducto decimal(14,2)
 --
 DECLARE @ifact_PC varchar(15)
-DECLARE @ifact_AC varchar(15)
 DECLARE @ifact_PC_total int
-DECLARE @ifact_AC_total int
 
 DECLARE @fact_created varchar(15)
 DECLARE @fact_created_total varchar(15)
 
 
-DECLARE db_cursor_item_factura CURSOR FOR 
+DECLARE db_cursor_item_factura_pc CURSOR FOR 
 SELECT
 		FACTURA_NUMERO,
 		CLIENTE_DNI,
@@ -771,42 +769,29 @@ SELECT
 		CLIENTE_APELLIDO,
 		FACTURA_FECHA,
 		PC_CODIGO,
-		ACCESORIO_CODIGO,
-		COUNT(PC_CODIGO) AS total_pc_vendido,
-		COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
+		COUNT(PC_CODIGO) AS total_pc_vendido
 	FROM gd_esquema.Maestra
-	WHERE FACTURA_NUMERO IS NOT NULL
+	WHERE FACTURA_NUMERO IS NOT NULL AND PC_CODIGO IS NOT NULL
 	GROUP BY 
 		FACTURA_NUMERO,
 		CLIENTE_DNI,
 		CLIENTE_NOMBRE,
 		CLIENTE_APELLIDO,
 		FACTURA_FECHA,
-		PC_CODIGO,
-		ACCESORIO_CODIGO
-	ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
+		PC_CODIGO
+	ORDER BY FACTURA_NUMERO
 
-OPEN db_cursor_item_factura  
-FETCH NEXT FROM db_cursor_item_factura INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+OPEN db_cursor_item_factura_pc  
+FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
-	BEGIN TRY
-			IF @ifact_PC IS NOT NULL
-			BEGIN
-				SELECT @ifact_idProducto = @ifact_PC;
-				SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'PC'
-				SELECT @ifact_Cantidad = @ifact_PC_total
-				SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
-			END
-		ELSE
-			BEGIN 
-				SELECT @ifact_idProducto = @ifact_AC;
-				SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'ACCESORIO'
-				SELECT @ifact_Cantidad = @ifact_AC_total
-				SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
-			END
-
+		BEGIN
+			SELECT @ifact_idProducto = @ifact_PC;
+			SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'PC'
+			SELECT @ifact_Cantidad = @ifact_PC_total
+			SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
+		END
 
 		BEGIN
 		IF NOT EXISTS (SELECT fact_Numero FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura)
@@ -815,21 +800,93 @@ BEGIN
 			END
 		ELSE
 			BEGIN
-			SELECT @fact_created_total = fact_Total FROM Factura WHERE fact_Numero = @fact_NumeroFactura
-			UPDATE Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
+			SELECT @fact_created_total = fact_Total FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura
+			UPDATE FJGD.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
 			END
 		END
 	
-		INSERT INTO FJGD.ItemFactura([ifact_FacturaNumero], ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
-	END TRY
-	BEGIN CATCH
-	END CATCH
+		INSERT INTO FJGD.ItemFactura(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
 	
-FETCH NEXT FROM db_cursor_item_factura INTO @fact_NumeroFactura, @fact_clieDNI, @fact_clieNombre, @fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_AC, @ifact_PC_total, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 END 
 
-CLOSE db_cursor_item_factura  
-DEALLOCATE db_cursor_item_factura
+CLOSE db_cursor_item_factura_pc  
+DEALLOCATE db_cursor_item_factura_pc
+GO
+
+-- Factura / Item Factura / AC
+ 
+DECLARE @fact_NumeroFactura decimal(18,0)
+DECLARE @fact_clieDNI varchar(15)
+DECLARE @fact_clieNombre varchar(30)
+DECLARE @fact_clieApellido varchar(30)
+DECLARE @fact_fecha smalldatetime
+--
+DECLARE @ifact_idProducto varchar(15)
+DECLARE @ifact_idCategoria int
+DECLARE @ifact_Cantidad decimal(10,2)
+DECLARE @ifact_PrecioProducto decimal(14,2)
+--
+DECLARE @ifact_AC varchar(15)
+DECLARE @ifact_AC_total int
+
+DECLARE @fact_created varchar(15)
+DECLARE @fact_created_total varchar(15)
+
+
+DECLARE db_cursor_item_factura_ac CURSOR FOR 
+SELECT
+		FACTURA_NUMERO,
+		CLIENTE_DNI,
+		CLIENTE_NOMBRE,
+		CLIENTE_APELLIDO,
+		FACTURA_FECHA,
+		ACCESORIO_CODIGO,
+		COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
+	FROM gd_esquema.Maestra
+	WHERE FACTURA_NUMERO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
+	GROUP BY 
+		FACTURA_NUMERO,
+		CLIENTE_DNI,
+		CLIENTE_NOMBRE,
+		CLIENTE_APELLIDO,
+		FACTURA_FECHA,
+		ACCESORIO_CODIGO
+	ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
+
+OPEN db_cursor_item_factura_ac  
+FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+	
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+		
+	BEGIN 
+		SELECT @ifact_idProducto = @ifact_AC;
+		SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD.Categoria WHERE cate_Descripcion = 'ACCESORIO'
+		SELECT @ifact_Cantidad = @ifact_AC_total
+		SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD.Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
+	END
+
+	BEGIN
+	IF NOT EXISTS (SELECT fact_Numero FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura)
+		BEGIN
+		INSERT INTO FJGD.Factura(fact_Numero, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+		END
+	ELSE
+		BEGIN
+		SELECT @fact_created_total = fact_Total FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura
+		UPDATE FJGD.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
+		END
+	END
+	
+	INSERT INTO FJGD.ItemFactura(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
+
+	
+FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+END 
+
+CLOSE db_cursor_item_factura_ac  
+DEALLOCATE db_cursor_item_factura_ac
 GO
 
 /* stock */
