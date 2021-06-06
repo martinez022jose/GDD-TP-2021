@@ -147,8 +147,17 @@ SELECT
  --Factura 38700-38699
  LEER DESDE LA GENERACION DE LA TABLA ITEM COMPRA 
  /*
- select * FROM GD1C2021.[gd_esquema].[Maestra]
+ select ACCESORIO_CODIGO,PC_CODIGO, COUNT(*) --* 
+ FROM GD1C2021.[gd_esquema].[Maestra]
  where FACTURA_NUMERO = '68092675'
+ group by ACCESORIO_CODIGO,PC_CODIGO
+
+  select COMPRA_PRECIO, ACCESORIO_CODIGO,PC_CODIGO,COUNT(*) --* 
+ FROM GD1C2021.[gd_esquema].[Maestra]
+ where COMPRA_NUMERO = '171580'
+ group by COMPRA_PRECIO,ACCESORIO_CODIGO,PC_CODIGO
+
+ 123134
  */
  SELECT
 		FACTURA_NUMERO,
@@ -218,3 +227,59 @@ SELECT
 
  --stock 56 rows
  triggers
+
+ /****** Script for SelectTopNRows command from SSMS  ******/
+SELECT ErrorMessage, count(*)
+  FROM [GD1C2021].[FJGD_sql].[ERRORES]
+  group by ErrorMessage
+
+SELECT *
+  FROM [GD1C2021].[FJGD_sql].[Stock]
+
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Cliente
+
+  select * FROM [GD1C2021].[FJGD_sql].Producto
+
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Compra
+  
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Factura
+    SELECT *
+  FROM [GD1C2021].[FJGD_sql].ItemFactura
+  where ifact_idProducto='00yhid'
+  
+
+  SELECT object_name(id) as objecto ,rowcnt
+FROM sys.sysindexes
+WHERE indid=1 and object_name(id) in ('Accesorio','Categoria','Cliente','Compra','Disco','Fabricante','Factura','ItemCompra','ItemFactura',
+'Micro','PC','Producto','RAM','Stock','Sucursal','Video')
+ORDER BY rowcnt
+
+
+
+--delete from [FJGD_sql].[ERRORES]
+
+--drop table  [GD1C2021].FJGD_sql.ERRORES
+/*
+drop table  [GD1C2021].FJGD_sql.Stock
+drop table  [GD1C2021].FJGD_sql.ItemCompra
+drop table  [GD1C2021].FJGD_sql.ItemFactura
+
+drop table  [GD1C2021].FJGD_sql.PC
+drop table  [GD1C2021].FJGD_sql.Producto
+
+drop table  [GD1C2021].FJGD_sql.Compra
+drop table  [GD1C2021].FJGD_sql.Factura
+drop table  [GD1C2021].FJGD_sql.RAM
+drop table  [GD1C2021].FJGD_sql.Micro
+drop table  [GD1C2021].FJGD_sql.Video
+drop table  [GD1C2021].FJGD_sql.Disco
+
+drop table  [GD1C2021].FJGD_sql.Cliente
+drop table  [GD1C2021].FJGD_sql.Sucursal
+drop table  [GD1C2021].FJGD_sql.Fabricante
+drop table  [GD1C2021].FJGD_sql.Categoria
+drop table  [GD1C2021].FJGD_sql.Accesorio
+*/
