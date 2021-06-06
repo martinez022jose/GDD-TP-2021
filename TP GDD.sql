@@ -30,7 +30,7 @@ CREATE TABLE FJGD_sql.Cliente(
 )
 
 CREATE TABLE FJGD_sql.Sucursal(
-	sucu_idSucursal int IDENTITY(1,1)  NOT NULL,
+	sucu_idSucursal int IDENTITY(5551,1)  NOT NULL,
 	sucu_Mail varchar(50) NULL,
 	sucu_Direccion varchar(50) NOT NULL,
 	sucu_Telefono varchar(18) NULL,

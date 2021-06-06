@@ -233,20 +233,33 @@ SELECT ErrorMessage, count(*)
   FROM [GD1C2021].[FJGD_sql].[ERRORES]
   group by ErrorMessage
 
-SELECT *
+  SELECT *
   FROM [GD1C2021].[FJGD_sql].[Stock]
-
+----------------------------------------
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Cliente
-
-  select * FROM [GD1C2021].[FJGD_sql].Producto
-
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Sucursal
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Fabricante
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Categoria
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Accesorio
+----------------------------------------
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Compra
-  
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Factura
-    SELECT *
+----------------------------------------
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].PC
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].Producto
+----------------------------------------
+  SELECT *
+  FROM [GD1C2021].[FJGD_sql].ItemCaptura
+  SELECT *
   FROM [GD1C2021].[FJGD_sql].ItemFactura
   where ifact_idProducto='00yhid'
   
