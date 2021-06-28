@@ -249,6 +249,7 @@ SELECT ErrorMessage, count(*)
 ----------------------------------------
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Compra
+  
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Factura
 ----------------------------------------
@@ -257,11 +258,13 @@ SELECT ErrorMessage, count(*)
   SELECT *
   FROM [GD1C2021].[FJGD_sql].Producto
 ----------------------------------------
-  SELECT *
-  FROM [GD1C2021].[FJGD_sql].ItemCaptura
-  SELECT *
+  SELECT icomp_idProducto, icomp_PrecioCompra
+  FROM [GD1C2021].[FJGD_sql].ItemCompra
+  group by icomp_idProducto, icomp_PrecioCompra
+
+  SELECT ifact_idProducto, ifact_PrecioProducto
   FROM [GD1C2021].[FJGD_sql].ItemFactura
-  where ifact_idProducto='00yhid'
+  group by ifact_idProducto, ifact_PrecioProducto
   
 
   SELECT object_name(id) as objecto ,rowcnt
@@ -271,9 +274,9 @@ WHERE indid=1 and object_name(id) in ('Accesorio','Categoria','Cliente','Compra'
 ORDER BY rowcnt
 
 
+--drop schema FJGD_sql
 
 --delete from [FJGD_sql].[ERRORES]
-
 --drop table  [GD1C2021].FJGD_sql.ERRORES
 /*
 drop table  [GD1C2021].FJGD_sql.Stock
