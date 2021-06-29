@@ -2,8 +2,8 @@ use GD1C2021
 go
 
 /* Creacion de Schemas */
-CREATE SCHEMA FJGD_sql;
-GO 
+--CREATE SCHEMA FJGD_sql;
+--GO 
 
 /* Creacion de tablas */
 
@@ -62,6 +62,7 @@ CREATE TABLE FJGD_sql.Factura(
 	fact_clieDNI varchar(15) NULL,
 	fact_clieApellido varchar(30)NULL,
 	fact_clieNombre varchar(30) NULL,
+	fact_idSucursal int NOT NULL,
 	fact_fecha smalldatetime NOT NULL,
 	fact_Total decimal(14,2) NOT NULL
 )
@@ -180,7 +181,8 @@ GO
 /* Foreings key */
 ALTER TABLE FJGD_sql.Factura
 ADD 
-	CONSTRAINT FK_FacturaCliente FOREIGN KEY(fact_clieDNI, fact_clieApellido,fact_clieNombre) REFERENCES FJGD_sql.Cliente(clie_DNI,clie_Apellido,clie_Nombre)
+	CONSTRAINT FK_FacturaCliente FOREIGN KEY(fact_clieDNI, fact_clieApellido,fact_clieNombre) REFERENCES FJGD_sql.Cliente(clie_DNI,clie_Apellido,clie_Nombre),
+	CONSTRAINT FK_FacturaSucursal FOREIGN KEY(fact_idSucursal) REFERENCES FJGD_sql.Sucursal(sucu_idSucursal)
 
 ALTER TABLE FJGD_sql.ItemFactura
 ADD 
@@ -804,6 +806,7 @@ DECLARE @fact_NumeroFactura decimal(18,0)
 DECLARE @fact_clieDNI varchar(15)
 DECLARE @fact_clieNombre varchar(30)
 DECLARE @fact_clieApellido varchar(30)
+DECLARE @fact_idSucursal int
 DECLARE @fact_fecha smalldatetime
 --
 DECLARE @ifact_idProducto varchar(15)
@@ -821,18 +824,20 @@ DECLARE @fact_created_total varchar(15)
 DECLARE db_cursor_item_factura_pc CURSOR FOR 
 ------------------------------------------
 SELECT
-		FACTURA_NUMERO,
+		FACTURA_NUMERO,sucu_idSucursal,
 		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO,
 		COUNT(PC_CODIGO) AS total_pc_vendido
 FROM gd_esquema.Maestra
+JOIN FJGD_sql.Sucursal
+on sucu_Mail = SUCURSAL_MAIL
 WHERE FACTURA_NUMERO IS NOT NULL AND PC_CODIGO IS NOT NULL
 GROUP BY 
-		FACTURA_NUMERO,
+		FACTURA_NUMERO,sucu_idSucursal,
 		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO
 ORDER BY FACTURA_NUMERO
 ------------------------------------------
 OPEN db_cursor_item_factura_pc  
-FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
+FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
@@ -851,8 +856,8 @@ BEGIN
 		BEGIN
 		IF NOT EXISTS (SELECT fact_Numero FROM FJGD_sql.Factura WHERE fact_Numero = @fact_NumeroFactura)
 			BEGIN
-			INSERT INTO FJGD_sql.Factura(fact_Numero, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) 
-			VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+			INSERT INTO FJGD_sql.Factura(fact_Numero,fact_idSucursal, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) 
+			VALUES (@fact_NumeroFactura,@fact_idSucursal, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 			END
 		ELSE
 			BEGIN
@@ -876,7 +881,7 @@ BEGIN
 					GETDATE());
 	END CATCH
 
-	FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
+	FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 END 
 
 CLOSE db_cursor_item_factura_pc  
@@ -889,6 +894,7 @@ DECLARE @fact_NumeroFactura decimal(18,0)
 DECLARE @fact_clieDNI varchar(15)
 DECLARE @fact_clieNombre varchar(30)
 DECLARE @fact_clieApellido varchar(30)
+DECLARE @fact_idSucursal int
 DECLARE @fact_fecha smalldatetime
 --
 DECLARE @ifact_idProducto varchar(15)
@@ -906,18 +912,20 @@ DECLARE @fact_created_total varchar(15)
 DECLARE db_cursor_item_factura_ac CURSOR FOR 
 ------------------------------------------
 SELECT
-	FACTURA_NUMERO,
+	FACTURA_NUMERO,sucu_idSucursal,
 	CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO,
 	COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
 FROM gd_esquema.Maestra
+JOIN FJGD_sql.Sucursal
+on sucu_Mail = SUCURSAL_MAIL
 WHERE FACTURA_NUMERO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
 GROUP BY 
-	FACTURA_NUMERO,
+	FACTURA_NUMERO,sucu_idSucursal,
 	CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO
 ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
 ------------------------------------------
 OPEN db_cursor_item_factura_ac  
-FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
@@ -933,8 +941,8 @@ BEGIN
 		BEGIN
 		IF NOT EXISTS (SELECT fact_Numero FROM FJGD_sql.Factura WHERE fact_Numero = @fact_NumeroFactura)
 			BEGIN
-			INSERT INTO FJGD_sql.Factura(fact_Numero, fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) 
-			VALUES (@fact_NumeroFactura, @fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
+			INSERT INTO FJGD_sql.Factura(fact_Numero,fact_idSucursal ,fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) 
+			VALUES (@fact_NumeroFactura,@fact_idSucursal ,@fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 			END
 		ELSE
 			BEGIN
@@ -961,7 +969,7 @@ BEGIN
 					GETDATE());
 	END CATCH
 	
-	FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+	FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
 END 
 
 CLOSE db_cursor_item_factura_ac  
