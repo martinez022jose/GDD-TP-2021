@@ -3,6 +3,7 @@ go
 /* Creacion de tablas DI */
 CREATE TABLE FJGD_sql.BI_DIM_Tiempo(
 	bi_tiem_id int identity (1,1) NOT NULL,
+	bi_tiem_dia decimal(2,0) NOT NULL,
 	bi_tiem_mes decimal(2,0) NOT NULL,
 	bi_tiem_anio decimal(4,0) NOT NULL
 )
@@ -216,32 +217,33 @@ GO
 
 /* Migracion Tiempo*/
 
-DECLARE @tiem_anio varchar(50)
+DECLARE @tiem_dia varchar(50)
 DECLARE @tiem_mes varchar(50)
+DECLARE @tiem_anio varchar(50)
 DECLARE db_bi_cursor_tiempo CURSOR FOR 
 
 SELECT
-YEAR(fact_fecha),
-MONTH(fact_fecha)
+
+DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
 FROM FJGD_sql.Factura
-GROUP BY YEAR(fact_fecha), MONTH(fact_fecha)
+GROUP BY DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
+
 UNION
 SELECT
-YEAR(comp_FechaCompra),
-MONTH(comp_FechaCompra)
+DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
 FROM FJGD_sql.Compra
-GROUP BY YEAR(comp_FechaCompra), MONTH(comp_FechaCompra)
-ORDER BY 1, 2;
+GROUP BY DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
+ORDER BY 3, 2;
 
 OPEN db_bi_cursor_tiempo  
-FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_anio, @tiem_mes
+FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN
 		BEGIN TRY
-					INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_anio, bi_tiem_mes)
-					VALUES (@tiem_anio, @tiem_mes)
+					INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_dia, bi_tiem_mes, bi_tiem_anio)
+					VALUES (@tiem_dia, @tiem_mes, @tiem_anio)
 					
 		END TRY
 		BEGIN CATCH 
@@ -255,7 +257,7 @@ BEGIN
 						ERROR_MESSAGE(),
 						GETDATE());
 		END CATCH
-	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_anio, @tiem_mes
+	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
 	END 
 END 
 
@@ -839,11 +841,27 @@ GO
 
 /*VISTA PC 1 */
 
---FALTA
+--Promedio de tiempo en sotck de cada modelo de PC.
+
+CREATE VIEW FJGD_sql.[pc_modelo_promedio] AS
+
+SELECT *
+FROM  FJGD_sql.BI_FACT_PC_COMPRA
+JOIN FJGD_sql.BI_DIM_Tiempo ON fact_comp_pc_tiempo_fk = bi_tiem_id
+
+
+JOIN FJGD_sql.BI_FACT_PC_VENTA ON bi_tiem_id = fact_vent_pc_tiempo_fk
+
+
+
+
+
+
+
 
 /*VISTA PC 2 */
 /*
-CREATE VIEW [pc_precio_promedio] AS
+CREATE VIEW FJGD_sql.[pc_precio_promedio] AS
 
 SELECT 
 	PC1.bi_pc_codigo [CODIGO_PC],
@@ -939,7 +957,8 @@ GO
 */
 /*VISTA ACCESORIOS 3 */
 
---FALTA
+--Promedio de tiempo en sotck de cada modelo de AC.
+
 
 /*VISTA ACCESORIOS 4 */
 /*

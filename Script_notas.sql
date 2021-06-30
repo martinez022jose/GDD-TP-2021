@@ -319,7 +319,10 @@ drop table FJGD_sql.BI_FACT_PC_VENTA
 delete from FJGD_sql.BI_FACT_AC_COMPRA
 delete from FJGD_sql.BI_FACT_AC_VENTA
 delete from FJGD_sql.BI_FACT_PC_COMPRA
+
 delete from FJGD_sql.BI_FACT_PC_VENTA
+
+ FJGD_sql.BI_DIM_Tiempo
 
 SELECT 
       [ErrorMessage]
@@ -328,3 +331,9 @@ SELECT
   group by [ErrorMessage]
 
 */
+
+SELECT object_name(id) as objecto ,rowcnt
+FROM sys.sysindexes
+WHERE indid=1 and object_name(id) in ('BI_DIM_AC','BI_DIM_Micro','BI_DIM_Video','BI_DIM_Disco','BI_DIM_Fabricante','BI_DIM_Micro','Factura','ItemCompra','ItemFactura',
+'Micro','PC','Producto','RAM','Stock','Sucursal','Video')
+ORDER BY rowcnt
