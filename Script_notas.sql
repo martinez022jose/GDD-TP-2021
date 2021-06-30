@@ -298,4 +298,33 @@ drop table  [GD1C2021].FJGD_sql.Sucursal
 drop table  [GD1C2021].FJGD_sql.Fabricante
 drop table  [GD1C2021].FJGD_sql.Categoria
 drop table  [GD1C2021].FJGD_sql.Accesorio
+
+drop table FJGD_sql.BI_DIM_AC
+drop table FJGD_sql.BI_DIM_Micro
+drop table FJGD_sql.BI_DIM_Disco
+drop table FJGD_sql.BI_DIM_Ram
+drop table FJGD_sql.BI_DIM_Cliente
+drop table FJGD_sql.BI_DIM_Fabricante
+drop table FJGD_sql.BI_DIM_PC
+drop table FJGD_sql.BI_DIM_Sucursal
+drop table FJGD_sql.BI_DIM_Tiempo
+drop table FJGD_sql.BI_DIM_RAM
+drop table FJGD_sql.BI_DIM_Video
+
+drop table FJGD_sql.BI_FACT_AC_COMPRA
+drop table FJGD_sql.BI_FACT_AC_VENTA
+drop table FJGD_sql.BI_FACT_PC_COMPRA
+drop table FJGD_sql.BI_FACT_PC_VENTA
+
+delete from FJGD_sql.BI_FACT_AC_COMPRA
+delete from FJGD_sql.BI_FACT_AC_VENTA
+delete from FJGD_sql.BI_FACT_PC_COMPRA
+delete from FJGD_sql.BI_FACT_PC_VENTA
+
+SELECT 
+      [ErrorMessage]
+     
+  FROM [GD1C2021].[FJGD_sql].[ERRORES]
+  group by [ErrorMessage]
+
 */
