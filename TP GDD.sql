@@ -1,5 +1,9 @@
-use GD1C2021
+/*use GD1C2021
 go
+
+CREATE SCHEMA FJGD_sql
+go
+*/
 
 /* Creacion de Schemas */
 --CREATE SCHEMA FJGD_sql;
@@ -26,7 +30,8 @@ CREATE TABLE FJGD_sql.Cliente(
 	clie_Direccion varchar(50) NULL,
 	clie_fechaNacimiento date NULL,
 	clie_mail varchar(50) NULL,
-	clie_telefono varchar(50) NULL
+	clie_telefono varchar(50) NULL,
+	clie_sexo varchar(10)
 )
 
 CREATE TABLE FJGD_sql.Sucursal(
@@ -250,6 +255,7 @@ DECLARE @clie_Direccion varchar(15)
 DECLARE @clie_FechaNacimiento date
 DECLARE @clie_Mail varchar(15)
 DECLARE @clie_Telefono varchar(50)
+DECLARE @clie_Sexo varchar(10)
 
 DECLARE db_cursor_cliente CURSOR FOR 
 ------------------------------------------
@@ -268,8 +274,13 @@ FETCH NEXT FROM db_cursor_cliente INTO @clie_DNI,@clie_Apellido, @clie_Nombre,  
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN TRY
-		INSERT INTO FJGD_sql.Cliente (clie_DNI, clie_Apellido, clie_Nombre, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono)
-		VALUES (@clie_DNI, @clie_Apellido, @clie_Nombre, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono)
+		
+		IF (DAY(@clie_FechaNacimiento) > 15)
+			SET @clie_Sexo = 'F'
+		ELSE
+			SET @clie_Sexo = 'M'
+		INSERT INTO FJGD_sql.Cliente (clie_DNI, clie_Apellido, clie_Nombre, clie_Direccion, clie_fechaNacimiento, clie_mail, clie_telefono, clie_sexo)
+		VALUES (@clie_DNI, @clie_Apellido, @clie_Nombre, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono, @clie_Sexo)
 	END TRY
 	BEGIN CATCH
 		INSERT INTO FJGD_sql.ERRORES

@@ -1,9 +1,9 @@
 USE GD1C2021
 go
+
 /* Creacion de tablas DI */
 CREATE TABLE FJGD_sql.BI_DIM_Tiempo(
 	bi_tiem_id int identity (1,1) NOT NULL,
-	bi_tiem_dia decimal(2,0) NOT NULL,
 	bi_tiem_mes decimal(2,0) NOT NULL,
 	bi_tiem_anio decimal(4,0) NOT NULL
 )
@@ -28,14 +28,9 @@ CREATE TABLE FJGD_sql.BI_DIM_AC(
 
 
 CREATE TABLE FJGD_sql.BI_DIM_Cliente(
-    bi_clie_DNI varchar(15) NOT NULL,
-    bi_clie_Apellido varchar(30) NOT NULL,
-    bi_clie_Nombre varchar(30) NOT NULL,
-    bi_clie_Direccion varchar(50) NULL,
-    bi_clie_fechaNacimiento date NULL,
-    bi_clie_mail varchar(50) NULL,
-    bi_clie_telefono varchar(50) NULL,
-    bi_clie_edad int NOT NULL,
+	bi_clie_id int IDENTITY(1,1) NOT NULL,
+    bi_clie_edad_inicio int NOT NULL,
+	bi_clie_edad_fin int NOT NULL,
     bi_clie_sexo varchar(10) NULL
 )
 
@@ -96,9 +91,7 @@ CREATE TABLE FJGD_sql.BI_FACT_PC_VENTA(
 	fact_vent_pc_tiempo_fk int NOT NULL,
 	fact_vent_pc_sucu_fk int NOT NULL,
 	fact_vent_pc_pc_fk int NOT NULL,
-	fact_vent_pc_clie_dni_fk varchar(15) NOT NULL,
-	fact_vent_pc_clie_apellido_fk varchar(30) NOT NULL,
-    fact_vent_pc_clie_nombre_fk varchar(30) NOT NULL,
+	fact_vent_pc_clie_fk int NOT NULL,
 	fact_vent_pc_placa_fk varchar(15) NOT NULL,
 	fact_vent_pc_ram_fk varchar(15) NOT NULL,
 	fact_vent_pc_micro_fk varchar(15) NOT NULL,
@@ -121,9 +114,7 @@ CREATE TABLE FJGD_sql.BI_FACT_AC_VENTA(
 	fact_vent_ac_tiempo_fk int NOT NULL,
 	fact_vent_ac_sucu_fk int NOT NULL,
 	fact_vent_ac_ac_fk int NOT NULL,
-	fact_vent_ac_clie_dni_fk varchar(15) NOT NULL,
-	fact_vent_ac_clie_apellido_fk varchar(30) NOT NULL,
-	fact_vent_ac_clie_nombre_fk varchar(30) NOT NULL,	
+	fact_vent_ac_clie_fk int NOT NULL,
 	fact_vent_ac_precio_venta decimal(14,2) NOT NULL,
 	fact_vent_ac_cantidad_vendida decimal(10,2) NOT NULL
 )
@@ -132,11 +123,22 @@ CREATE TABLE FJGD_sql.BI_FACT_AC_VENTA(
 
 /* Primaries key */
 
+ALTER TABLE FJGD_sql.BI_FACT_PC_COMPRA ADD CONSTRAINT PK_FACT_PC_COMPRA PRIMARY KEY(
+	fact_comp_pc_tiempo_fk,
+	fact_comp_pc_sucu_fk,
+	fact_comp_pc_pc_fk,
+	fact_comp_pc_placa_fk,
+	fact_comp_pc_ram_fk,
+	fact_comp_pc_micro_fk,
+	fact_comp_pc_disco_fk
+)
+
+
 ALTER TABLE FJGD_sql.BI_DIM_Tiempo ADD CONSTRAINT PK_DIM_Tiempo PRIMARY KEY(bi_tiem_id)
 ALTER TABLE FJGD_sql.BI_DIM_Sucursal ADD CONSTRAINT PK_DIM_Sucursal PRIMARY KEY(bi_sucu_id)
 ALTER TABLE FJGD_sql.BI_DIM_PC ADD CONSTRAINT PK_DIM_PC PRIMARY KEY(bi_pc_id)
 ALTER TABLE FJGD_sql.BI_DIM_AC ADD CONSTRAINT PK_DIM_AC PRIMARY KEY(bi_ac_id)
-ALTER TABLE FJGD_sql.BI_DIM_Cliente ADD CONSTRAINT PK_DIM_Cliente PRIMARY KEY(bi_clie_DNI, bi_clie_Apellido, bi_clie_Nombre)
+ALTER TABLE FJGD_sql.BI_DIM_Cliente ADD CONSTRAINT PK_DIM_Cliente PRIMARY KEY(bi_clie_id)
 ALTER TABLE FJGD_sql.BI_DIM_Fabricante ADD CONSTRAINT PK_DIM_Fabricante PRIMARY KEY(bi_fabri_codigo)
 --
 ALTER TABLE FJGD_sql.BI_DIM_Video ADD CONSTRAINT PK_DIM_VIDEO PRIMARY KEY (bi_vide_Modelo)
@@ -169,7 +171,7 @@ ADD
 	CONSTRAINT FK_BI_FACT_PC_VENTA_TIEMPO FOREIGN KEY (fact_vent_pc_tiempo_fk ) REFERENCES FJGD_sql.BI_DIM_Tiempo(bi_tiem_id),
 	CONSTRAINT FK_BI_FACT_PC_VENTA_SUCURSAL FOREIGN KEY (fact_vent_pc_sucu_fk ) REFERENCES FJGD_sql.BI_DIM_Sucursal(bi_sucu_id),
 	CONSTRAINT FK_BI_FACT_PC_VENTA_PC FOREIGN KEY (fact_vent_pc_pc_fk) REFERENCES FJGD_sql.BI_DIM_PC(bi_pc_id),
-	CONSTRAINT FK_BI_FACT_PC_VENTA_CLIENTE FOREIGN KEY (fact_vent_pc_clie_dni_fk, fact_vent_pc_clie_apellido_fk, fact_vent_pc_clie_nombre_fk) REFERENCES FJGD_sql.BI_DIM_Cliente(bi_clie_DNI,bi_clie_Apellido,bi_clie_Nombre),
+	CONSTRAINT FK_BI_FACT_PC_VENTA_CLIENTE FOREIGN KEY (fact_vent_pc_clie_fk) REFERENCES FJGD_sql.BI_DIM_Cliente(bi_clie_id),
 	CONSTRAINT FK_BI_FACT_PC_VENTA_PLACAVIDEO FOREIGN KEY (fact_vent_pc_placa_fk) REFERENCES FJGD_sql.BI_DIM_Video(bi_vide_modelo),
 	CONSTRAINT FK_BI_FACT_PC_VENTA_RAM FOREIGN KEY (fact_vent_pc_ram_fk) REFERENCES FJGD_sql.BI_DIM_Ram(bi_ram_idRam),
 	CONSTRAINT FK_BI_FACT_PC_VENTA_MICRO FOREIGN KEY (fact_vent_pc_micro_fk) REFERENCES FJGD_sql.BI_DIM_Micro(bi_micr_idMicro),
@@ -188,7 +190,7 @@ ADD
 	CONSTRAINT FK_BI_FACT_AC_VENTA_TIEMPO FOREIGN KEY (fact_vent_ac_tiempo_fk ) REFERENCES FJGD_sql.BI_DIM_Tiempo(bi_tiem_id),
 	CONSTRAINT FK_BI_FACT_AC_VENTA_SUCURSAL FOREIGN KEY (fact_vent_ac_sucu_fk ) REFERENCES FJGD_sql.BI_DIM_Sucursal(bi_sucu_id),
 	CONSTRAINT FK_BI_FACT_AC_VENTA_AC FOREIGN KEY (fact_vent_ac_ac_fk) REFERENCES FJGD_sql.BI_DIM_AC(bi_ac_id),
-	CONSTRAINT FK_BI_FACT_AC_VENTA_CLIENTE FOREIGN KEY (fact_vent_ac_clie_dni_fk, fact_vent_ac_clie_apellido_fk, fact_vent_ac_clie_nombre_fk) REFERENCES FJGD_sql.BI_DIM_Cliente(bi_clie_DNI, bi_clie_Apellido, bi_clie_Nombre)
+	CONSTRAINT FK_BI_FACT_AC_VENTA_CLIENTE FOREIGN KEY (fact_vent_ac_clie_fk) REFERENCES FJGD_sql.BI_DIM_Cliente(bi_clie_id)
 GO
 
 ALTER TABLE FJGD_sql.BI_DIM_Video
@@ -217,33 +219,32 @@ GO
 
 /* Migracion Tiempo*/
 
-DECLARE @tiem_dia varchar(50)
 DECLARE @tiem_mes varchar(50)
 DECLARE @tiem_anio varchar(50)
 DECLARE db_bi_cursor_tiempo CURSOR FOR 
 
 SELECT
 
-DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
+MONTH(fact_fecha),YEAR(fact_fecha)
 FROM FJGD_sql.Factura
-GROUP BY DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
+GROUP BY MONTH(fact_fecha),YEAR(fact_fecha)
 
 UNION
 SELECT
-DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
+MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
 FROM FJGD_sql.Compra
-GROUP BY DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
-ORDER BY 3, 2;
+GROUP BY MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
+ORDER BY 2, 1;
 
 OPEN db_bi_cursor_tiempo  
-FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
+FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_mes, @tiem_anio
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN
 		BEGIN TRY
-					INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_dia, bi_tiem_mes, bi_tiem_anio)
-					VALUES (@tiem_dia, @tiem_mes, @tiem_anio)
+					INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_mes, bi_tiem_anio)
+					VALUES ( @tiem_mes, @tiem_anio)
 					
 		END TRY
 		BEGIN CATCH 
@@ -257,7 +258,7 @@ BEGIN
 						ERROR_MESSAGE(),
 						GETDATE());
 		END CATCH
-	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
+	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_mes, @tiem_anio
 	END 
 END 
 
@@ -390,46 +391,13 @@ GO
 
 --Cliente
 
-DECLARE @clie_DNI varchar(15)
-DECLARE @clie_Apellido varchar(30)
-DECLARE @clie_Nombre varchar(30)
-DECLARE @clie_Direccion varchar(15)
-DECLARE @clie_FechaNacimiento smalldatetime
-DECLARE @clie_Mail varchar(15)
-DECLARE @clie_Telefono varchar(50)
-DECLARE @clie_Edad int
-DECLARE @clie_Sexo varchar(10)
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (18,30,'F')
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (18,30,'M')
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (31,50,'F')
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (31,50,'M')
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (50,999,'F')
+INSERT INTO FJGD_sql.BI_DIM_Cliente (bi_clie_edad_inicio,bi_clie_edad_fin,bi_clie_sexo) VALUES (50,999,'M')
 
-DECLARE db_bi_cursor_cliente CURSOR FOR
-SELECT  
-    clie_DNI,
-    clie_Apellido,
-    clie_Nombre,
-    clie_Direccion,
-    clie_fechaNacimiento,
-    clie_mail,
-    clie_telefono,
-    YEAR(GETDATE()) - YEAR(clie_fechaNacimiento)
-FROM FJGD_sql.Cliente
-WHERE clie_DNI IS NOT NULL
-ORDER BY clie_DNI, clie_apellido, clie_nombre
-
-
-OPEN db_bi_cursor_cliente
-FETCH NEXT FROM db_bi_cursor_cliente INTO @clie_DNI,@clie_Apellido, @clie_Nombre, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono, @clie_Edad
-
-WHILE @@FETCH_STATUS = 0  
-BEGIN  
-    INSERT INTO FJGD_sql.BI_DIM_Cliente( bi_clie_DNI,bi_clie_Apellido,bi_clie_Nombre,
-    bi_clie_Direccion, bi_clie_fechaNacimiento, bi_clie_mail, bi_clie_telefono, bi_clie_edad, bi_clie_sexo)
-    VALUES (@clie_DNI,@clie_Apellido, @clie_Nombre, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono, @clie_Edad, NULL)
-
-   	 FETCH NEXT FROM db_bi_cursor_cliente INTO @clie_DNI,@clie_Apellido, @clie_Nombre, @clie_Direccion, @clie_FechaNacimiento, @clie_Mail, @clie_Telefono, @clie_Edad
-END
-
-CLOSE db_bi_cursor_cliente  
-DEALLOCATE db_bi_cursor_cliente
-GO
 
 ---Fabricante
 DECLARE @fabr_codigo varchar(30)
@@ -567,7 +535,6 @@ GO
 
 
 
-
 -- FACT_PC_COMPRA
 DECLARE @fact_pc_anio decimal(4,0)
 DECLARE @fact_pc_mes decimal(2,0)
@@ -583,13 +550,24 @@ DECLARE @fact_pc_cantidad decimal(10, 2)
 
 DECLARE db_bi_cursor_fact_pc_compra CURSOR FOR 
 SELECT  
-	YEAR(comp_FechaCompra) as anio,	MONTH(comp_FechaCompra) as mes,sucu_Mail,icomp_idProducto,pc_idVideo,pc_idRam,pc_idMicro,pc_idDisco,comp_GastoTotal,icomp_Cantidad
+	YEAR(comp_FechaCompra) as anio,
+	MONTH(comp_FechaCompra) as mes,
+	sucu_Mail,
+	icomp_idProducto,
+	pc_idVideo,
+	pc_idRam,
+	pc_idMicro,
+	pc_idDisco,
+	SUM(comp_GastoTotal),
+	SUM(icomp_Cantidad)
 FROM FJGD_sql.Compra
 JOIN FJGD_sql.ItemCompra ON icomp_NumeroCompra = comp_NumeroCompra
 JOIN FJGD_sql.Sucursal ON sucu_idSucursal = comp_idSucursal
 JOIN FJGD_sql.Producto ON icomp_idProducto = prod_codProducto
 JOIN FJGD_sql.PC ON prod_codProducto = pc_idCodigo
-WHERE icomp_idCategoria = 'PC';
+WHERE icomp_idCategoria = 'PC'
+GROUP BY YEAR(comp_FechaCompra), MONTH(comp_FechaCompra),sucu_Mail,icomp_idProducto,pc_idVideo,pc_idRam,pc_idMicro,pc_idDisco
+ORDER BY 2,1
 
 OPEN db_bi_cursor_fact_pc_compra  
 FETCH NEXT FROM db_bi_cursor_fact_pc_compra INTO @fact_pc_anio, @fact_pc_mes,@fact_pc_sucu_mail, @fact_pc_producto,@fact_pc_placa,@fact_pc_ram,@fact_pc_micro,@fact_pc_disco, @fact_pc_precio, @fact_pc_cantidad
@@ -638,9 +616,8 @@ DECLARE @fact_pc_vent_anio decimal(4,0)
 DECLARE @fact_pc_vent_mes decimal(2,0)
 DECLARE @fact_pc_vent_producto varchar(15) 
 DECLARE @fact_pc_sucu_mail varchar(50)
-DECLARE @fact_vent_pc_clie_dni varchar(15)
-DECLARE @fact_vent_pc_clie_Apellido varchar(30)
-DECLARE @fact_vent_pc_clie_Nombre varchar(30)
+DECLARE @fact_vent_pc_clie_edad int
+DECLARE @fact_vent_pc_clie_sexo varchar(10)
 DECLARE @fact_pc_placa varchar(15)
 DECLARE @fact_pc_ram varchar(15)
 DECLARE @fact_pc_micro varchar(15)
@@ -654,43 +631,63 @@ SELECT
 	MONTH(fact_fecha) as mes,
 	sucu_Mail,
 	ifact_idProducto,
-	fact_clieDNI,
-	fact_clieApellido,
-	fact_clieNombre,
+	YEAR(GETDATE()) - YEAR(clie_fechaNacimiento),
+	clie_sexo,
 	pc_idVideo, pc_idRam, pc_idMicro, pc_idDisco,
-	fact_Total,
-	ifact_Cantidad	
+	SUM(fact_Total),
+	SUM(ifact_Cantidad)
 FROM FJGD_sql.Factura
+JOIN FJGD_sql.Cliente ON fact_clieDNI = clie_DNI
 JOIN FJGD_sql.ItemFactura ON ifact_FacturaNumero = fact_Numero
 JOIN FJGD_sql.Sucursal ON sucu_idSucursal = fact_idSucursal
 JOIN FJGD_sql.Producto ON ifact_idProducto = prod_codProducto
 JOIN FJGD_sql.PC ON prod_codProducto = pc_idCodigo
 WHERE ifact_idCategoria = 'PC'
-;
+GROUP BY YEAR(fact_fecha), MONTH(fact_fecha),clie_sexo, sucu_Mail, ifact_idProducto, YEAR(GETDATE()) - YEAR(clie_fechaNacimiento),pc_idVideo, pc_idRam, pc_idMicro, pc_idDisco
 
 OPEN db_bi_cursor_fact_pc_venta  
-FETCH NEXT FROM db_bi_cursor_fact_pc_venta INTO @fact_pc_vent_anio, @fact_pc_vent_mes,@fact_pc_sucu_mail, @fact_pc_vent_producto,@fact_vent_pc_clie_dni,@fact_vent_pc_clie_Apellido,@fact_vent_pc_clie_Nombre,@fact_pc_placa, @fact_pc_ram, @fact_pc_micro, @fact_pc_disco, @fact_pc_vent_precio, @fact_pc_vent_cantidad
+FETCH NEXT FROM db_bi_cursor_fact_pc_venta INTO @fact_pc_vent_anio, @fact_pc_vent_mes,@fact_pc_sucu_mail, @fact_pc_vent_producto,@fact_vent_pc_clie_edad,@fact_vent_pc_clie_sexo,@fact_pc_placa, @fact_pc_ram, @fact_pc_micro, @fact_pc_disco, @fact_pc_vent_precio, @fact_pc_vent_cantidad
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN TRY
-					INSERT INTO FJGD_sql.BI_FACT_PC_VENTA(fact_vent_pc_tiempo_fk,fact_vent_pc_sucu_fk,fact_vent_pc_pc_fk,fact_vent_pc_clie_dni_fk,fact_vent_pc_clie_apellido_fk,fact_vent_pc_clie_Nombre_fk, fact_vent_pc_placa_fk,fact_vent_pc_ram_fk, fact_vent_pc_micro_fk, fact_vent_pc_disco_fk, fact_vent_pc_precio_venta, fact_vent_pc_cantidad_vendida)
-							VALUES (
-							(SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_pc_vent_anio AND bi_tiem_mes = @fact_pc_vent_mes),
-							(SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_pc_sucu_mail),
-							(SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_pc_vent_producto),
-							@fact_vent_pc_clie_dni,
-							@fact_vent_pc_clie_Apellido,
-							@fact_vent_pc_clie_Nombre,
-							@fact_pc_placa,
-							@fact_pc_ram,
-							@fact_pc_micro,
-							@fact_pc_disco,
-							@fact_pc_vent_precio,
-							@fact_pc_vent_cantidad
-							)
+		DECLARE @cantidadVendida decimal(10,2) = 0 , @totalVendido decimal(14,2) = 0;
+
+		SELECT @totalVendido = fact_vent_pc_precio_venta, @cantidadVendida = fact_vent_pc_cantidad_vendida FROM FJGD_sql.BI_FACT_PC_VENTA WHERE
+		fact_vent_pc_tiempo_fk = (SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_pc_vent_anio AND bi_tiem_mes = @fact_pc_vent_mes) AND
+		fact_vent_pc_sucu_fk = (SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_pc_sucu_mail) AND
+		fact_vent_pc_pc_fk = (SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_pc_vent_producto) AND
+		fact_vent_pc_clie_fk = (SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_pc_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_pc_clie_edad AND bi_clie_edad_fin > @fact_vent_pc_clie_edad)
+
+		IF (@cantidadVendida != 0 AND @totalVendido != 0)
+			BEGIN
+			UPDATE FJGD_sql.BI_FACT_PC_VENTA SET fact_vent_pc_precio_venta = @totalVendido + @fact_pc_vent_precio, fact_vent_pc_cantidad_vendida = @cantidadVendida + @fact_pc_vent_cantidad WHERE
+			(
+			fact_vent_pc_tiempo_fk = (SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_pc_vent_anio AND bi_tiem_mes = @fact_pc_vent_mes) AND
+			fact_vent_pc_sucu_fk = (SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_pc_sucu_mail) AND
+			fact_vent_pc_pc_fk = (SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_pc_vent_producto) AND
+			fact_vent_pc_clie_fk = (SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_pc_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_pc_clie_edad AND bi_clie_edad_fin > @fact_vent_pc_clie_edad)
+			)
+			END
+
+		IF (@cantidadVendida = 0 AND @totalVendido = 0)
+		BEGIN
+			INSERT INTO FJGD_sql.BI_FACT_PC_VENTA(fact_vent_pc_tiempo_fk,fact_vent_pc_sucu_fk,fact_vent_pc_pc_fk,fact_vent_pc_clie_fk,fact_vent_pc_placa_fk,fact_vent_pc_ram_fk, fact_vent_pc_micro_fk, fact_vent_pc_disco_fk, fact_vent_pc_precio_venta, fact_vent_pc_cantidad_vendida)
+					VALUES (
+					(SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_pc_vent_anio AND bi_tiem_mes = @fact_pc_vent_mes),
+					(SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_pc_sucu_mail),
+					(SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_pc_vent_producto),
+					(SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_pc_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_pc_clie_edad AND bi_clie_edad_fin > @fact_vent_pc_clie_edad),
+					@fact_pc_placa,
+					@fact_pc_ram,
+					@fact_pc_micro,
+					@fact_pc_disco,
+					@fact_pc_vent_precio,
+					@fact_pc_vent_cantidad
+					)
+		END
 					
-				END TRY
+			END TRY
 				BEGIN CATCH 
 					INSERT INTO FJGD_sql.ERRORES
 		VALUES(		SUSER_SNAME(),
@@ -702,7 +699,7 @@ BEGIN
 					ERROR_MESSAGE(),
 					GETDATE());
 				END CATCH
-		FETCH NEXT FROM db_bi_cursor_fact_pc_venta INTO @fact_pc_vent_anio, @fact_pc_vent_mes,@fact_pc_sucu_mail, @fact_pc_vent_producto,@fact_vent_pc_clie_dni,@fact_vent_pc_clie_Apellido,@fact_vent_pc_clie_Nombre,@fact_pc_placa, @fact_pc_ram, @fact_pc_micro, @fact_pc_disco, @fact_pc_vent_precio, @fact_pc_vent_cantidad
+		FETCH NEXT FROM db_bi_cursor_fact_pc_venta INTO @fact_pc_vent_anio, @fact_pc_vent_mes,@fact_pc_sucu_mail, @fact_pc_vent_producto,@fact_vent_pc_clie_edad,@fact_vent_pc_clie_sexo,@fact_pc_placa, @fact_pc_ram, @fact_pc_micro, @fact_pc_disco, @fact_pc_vent_precio, @fact_pc_vent_cantidad
 
 END 
 
@@ -724,15 +721,15 @@ SELECT
 	MONTH(comp_FechaCompra) as mes,
 	icomp_idProducto,
 	sucu_Mail,
-	comp_GastoTotal,
-	icomp_Cantidad
+	SUM(comp_GastoTotal),
+	SUM(icomp_Cantidad)
 FROM FJGD_sql.Compra
 JOIN FJGD_sql.ItemCompra ON icomp_NumeroCompra = comp_NumeroCompra
 JOIN FJGD_sql.Sucursal ON sucu_idSucursal = comp_idSucursal
 WHERE icomp_idCategoria = 'ACCESORIO'
-;
+GROUP BY YEAR(comp_FechaCompra), MONTH(comp_FechaCompra), icomp_idProducto, sucu_Mail
 
-OPEN db_bi_cursor_fact_ac_compra  
+OPEN db_bi_cursor_fact_ac_compra 
 FETCH NEXT FROM db_bi_cursor_fact_ac_compra INTO @fact_ac_anio, @fact_ac_mes, @fact_ac_producto, @fact_ac_sucu_mail, @fact_ac_precio, @fact_ac_cantidad
 
 WHILE @@FETCH_STATUS = 0  
@@ -775,48 +772,84 @@ DECLARE @fact_ac_vent_anio decimal(4,0)
 DECLARE @fact_ac_vent_mes decimal(2,0)
 DECLARE @fact_ac_vent_producto varchar(15) 
 DECLARE @fact_ac_sucu_mail varchar(50)
-DECLARE @fact_vent_ac_clie_dni varchar(15)
-DECLARE @fact_vent_ac_clie_Nombre varchar(30)
-DECLARE @fact_vent_ac_clie_Apellido varchar(30)
+DECLARE @fact_vent_ac_clie_edad int
+DECLARE @fact_vent_ac_clie_sexo varchar(10)
 DECLARE @fact_ac_vent_precio decimal(18, 0)
 DECLARE @fact_ac_vent_cantidad decimal(18, 0)
 
 DECLARE db_bi_cursor_fact_ac_venta CURSOR FOR 
+
 SELECT  
 	YEAR(fact_fecha) as anio,
 	MONTH(fact_fecha) as mes,
 	ifact_idProducto,
 	sucu_Mail,
-	fact_clieDNI,
-	fact_clieNombre,
-	fact_clieApellido,
-	fact_Total,
-	ifact_Cantidad
+	YEAR(GETDATE()) - YEAR(clie_fechaNacimiento),
+	clie_sexo,
+	sum(fact_Total),
+	sum(ifact_Cantidad)
 FROM FJGD_sql.Factura
+JOIN FJGD_sql.Cliente ON clie_DNI = fact_clieDNI
 JOIN FJGD_sql.ItemFactura ON ifact_FacturaNumero = fact_Numero
 JOIN FJGD_sql.Sucursal ON sucu_idSucursal = fact_idSucursal
 WHERE ifact_idCategoria = 'ACCESORIO'
-;
+GROUP BY YEAR(fact_fecha), MONTH(fact_fecha),ifact_idProducto, sucu_Mail,clie_fechaNacimiento, clie_sexo, fact_clieApellido
+ORDER BY 2,1
 
 OPEN db_bi_cursor_fact_ac_venta  
-FETCH NEXT FROM db_bi_cursor_fact_ac_venta INTO @fact_ac_vent_anio, @fact_ac_vent_mes, @fact_ac_vent_producto, @fact_ac_sucu_mail,@fact_vent_ac_clie_dni,@fact_vent_ac_clie_Nombre,@fact_vent_ac_clie_Apellido, @fact_ac_vent_precio, @fact_ac_vent_cantidad
+FETCH NEXT FROM db_bi_cursor_fact_ac_venta INTO 
+@fact_ac_vent_anio, 
+@fact_ac_vent_mes, 
+@fact_ac_vent_producto, 
+@fact_ac_sucu_mail,
+@fact_vent_ac_clie_edad,
+@fact_vent_ac_clie_sexo,
+@fact_ac_vent_precio,
+@fact_ac_vent_cantidad
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN
 				BEGIN TRY
-					INSERT INTO FJGD_sql.BI_FACT_AC_VENTA(fact_vent_ac_tiempo_fk,fact_vent_ac_sucu_fk, fact_vent_ac_ac_fk, fact_vent_ac_clie_dni_fk,fact_vent_ac_clie_nombre_fk,fact_vent_ac_clie_apellido_fk,fact_vent_ac_precio_venta, fact_vent_ac_cantidad_vendida)
+
+					DECLARE @cantidadVendida decimal(10,2) = 0 , @totalVendido decimal(14,2) = 0;
+
+					SELECT @totalVendido = fact_vent_ac_precio_venta, @cantidadVendida = fact_vent_ac_cantidad_vendida FROM FJGD_sql.BI_FACT_AC_VENTA WHERE
+					fact_vent_ac_tiempo_fk = (SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_ac_vent_anio AND bi_tiem_mes = @fact_ac_vent_mes) AND
+					fact_vent_ac_sucu_fk = (SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_ac_sucu_mail) AND
+					fact_vent_ac_ac_fk = (SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_ac_vent_producto) AND
+					fact_vent_ac_clie_fk = (SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_ac_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_ac_clie_edad AND bi_clie_edad_fin > @fact_vent_ac_clie_edad)
+
+					IF (@cantidadVendida != 0 AND @totalVendido != 0)
+						BEGIN
+						UPDATE FJGD_sql.BI_FACT_AC_VENTA SET fact_vent_ac_precio_venta = @totalVendido + @fact_ac_vent_precio, fact_vent_ac_cantidad_vendida = @cantidadVendida + @fact_ac_vent_cantidad WHERE
+						(
+						fact_vent_ac_tiempo_fk = (SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_ac_vent_anio AND bi_tiem_mes = @fact_ac_vent_mes) AND
+						fact_vent_ac_sucu_fk = (SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_ac_sucu_mail) AND
+						fact_vent_ac_ac_fk = (SELECT TOP 1 bi_pc_id FROM FJGD_sql.BI_DIM_PC WHERE  bi_pc_codigo = @fact_ac_vent_producto) AND
+						fact_vent_ac_clie_fk = (SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_ac_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_ac_clie_edad AND bi_clie_edad_fin > @fact_vent_ac_clie_edad)
+						)
+						END
+
+					IF (@cantidadVendida = 0 AND @totalVendido = 0)
+					BEGIN
+						INSERT INTO FJGD_sql.BI_FACT_AC_VENTA(
+							fact_vent_ac_tiempo_fk,
+							fact_vent_ac_sucu_fk, 
+							fact_vent_ac_ac_fk, 
+							fact_vent_ac_clie_fk,
+							fact_vent_ac_precio_venta, 
+							fact_vent_ac_cantidad_vendida
+							)
 							VALUES (
 							(SELECT TOP 1 bi_tiem_id FROM FJGD_sql.BI_DIM_Tiempo WHERE bi_tiem_anio = @fact_ac_vent_anio AND bi_tiem_mes = @fact_ac_vent_mes),
 							(SELECT TOP 1 bi_sucu_id FROM FJGD_sql.BI_DIM_Sucursal WHERE  bi_sucu_mail = @fact_ac_sucu_mail),
 							(SELECT TOP 1 bi_ac_id FROM FJGD_sql.BI_DIM_AC WHERE  bi_ac_codigo = @fact_ac_vent_producto),
-							@fact_vent_ac_clie_dni,
-							@fact_vent_ac_clie_Nombre,
-							@fact_vent_ac_clie_Apellido,
+							(SELECT TOP 1 bi_clie_id FROM FJGD_sql.BI_DIM_Cliente WHERE bi_clie_sexo = @fact_vent_ac_clie_sexo AND bi_clie_edad_inicio <= @fact_vent_ac_clie_edad AND bi_clie_edad_fin > @fact_vent_ac_clie_edad),
 							@fact_ac_vent_precio,
 							@fact_ac_vent_cantidad
 							)
-					
+					END
 				END TRY
 				BEGIN CATCH 
 					INSERT INTO FJGD_sql.ERRORES
@@ -829,8 +862,15 @@ BEGIN
 					ERROR_MESSAGE(),
 					GETDATE());
 				END CATCH
-			FETCH NEXT FROM db_bi_cursor_fact_ac_venta INTO @fact_ac_vent_anio, @fact_ac_vent_mes, @fact_ac_vent_producto, @fact_ac_sucu_mail,@fact_vent_ac_clie_dni,@fact_vent_ac_clie_Nombre,@fact_vent_ac_clie_Apellido, @fact_ac_vent_precio, @fact_ac_vent_cantidad
-
+			FETCH NEXT FROM db_bi_cursor_fact_ac_venta INTO 
+			@fact_ac_vent_anio, 
+			@fact_ac_vent_mes, 
+			@fact_ac_vent_producto, 
+			@fact_ac_sucu_mail,
+			@fact_vent_ac_clie_edad,
+			@fact_vent_ac_clie_sexo,
+			@fact_ac_vent_precio,
+			@fact_ac_vent_cantidad
 	END 
 END 
 
@@ -851,12 +891,6 @@ JOIN FJGD_sql.BI_DIM_Tiempo ON fact_comp_pc_tiempo_fk = bi_tiem_id
 
 
 JOIN FJGD_sql.BI_FACT_PC_VENTA ON bi_tiem_id = fact_vent_pc_tiempo_fk
-
-
-
-
-
-
 
 
 /*VISTA PC 2 */
