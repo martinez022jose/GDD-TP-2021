@@ -1,13 +1,9 @@
-/*use GD1C2021
-go
-
-CREATE SCHEMA FJGD_sql
-go
-*/
+--use GD1C2021
+--go
 
 /* Creacion de Schemas */
---CREATE SCHEMA FJGD_sql;
---GO 
+CREATE SCHEMA FJGD_sql;
+GO 
 
 /* Creacion de tablas */
 
@@ -812,6 +808,7 @@ DECLARE @fact_clieDNI varchar(15)
 DECLARE @fact_clieNombre varchar(30)
 DECLARE @fact_clieApellido varchar(30)
 DECLARE @fact_idSucursal int
+DECLARE @fact_sucuEmail varchar(50)
 DECLARE @fact_fecha smalldatetime
 --
 DECLARE @ifact_idProducto varchar(15)
@@ -829,31 +826,31 @@ DECLARE @fact_created_total varchar(15)
 DECLARE db_cursor_item_factura_pc CURSOR FOR 
 ------------------------------------------
 SELECT
-		FACTURA_NUMERO,SUCURSAL_MAIL,
-		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO,
+		FACTURA_NUMERO,
+		SUCURSAL_MAIL,
+		CLIENTE_DNI,
+		CLIENTE_NOMBRE,
+		CLIENTE_APELLIDO,
+		FACTURA_FECHA,
+		PC_CODIGO,
 		COUNT(PC_CODIGO) AS total_pc_vendido
 FROM gd_esquema.Maestra
 WHERE FACTURA_NUMERO IS NOT NULL AND PC_CODIGO IS NOT NULL
-GROUP BY 
-		FACTURA_NUMERO,SUCURSAL_MAIL,
-		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO
+GROUP BY FACTURA_NUMERO,SUCURSAL_MAIL,CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO
 ORDER BY FACTURA_NUMERO
 ------------------------------------------
 OPEN db_cursor_item_factura_pc  
-FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
+FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura, @fact_sucuEmail, @fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
 		BEGIN
 			SELECT @ifact_idProducto = @ifact_PC;
-			SELECT @ifact_idCategoria = cate_idCategoria 
-			FROM FJGD_sql.Categoria 
-			WHERE cate_idCategoria = 'PC'
+			SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD_sql.Categoria WHERE cate_idCategoria = 'PC'
 			SELECT @ifact_Cantidad = @ifact_PC_total
-			SELECT @ifact_PrecioProducto = prod_Precio 
-			FROM FJGD_sql.Producto 
-			WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
+			SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD_sql.Producto WHERE prod_codProducto = @ifact_PC AND prod_idCategoria = @ifact_idCategoria
+			SELECT @fact_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Mail = @fact_sucuEmail
 		END
 
 		BEGIN
@@ -864,13 +861,12 @@ BEGIN
 			END
 		ELSE
 			BEGIN
-			SELECT @fact_created_total = fact_Total FROM FJGD_sql.Factura WHERE fact_Numero = @fact_NumeroFactura
-			UPDATE FJGD_sql.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
+			SELECT @fact_created_total = fact_Total FROM FJGD.Factura WHERE fact_Numero = @fact_NumeroFactura
+			UPDATE FJGD.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
 			END
 		END
 	
-		INSERT INTO FJGD_sql.ItemFactura(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) 
-		VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
+		INSERT INTO FJGD_sql.ItemFactura(ifact_FacturaNumero, ifact_idProducto, ifact_idCategoria, ifact_Cantidad, ifact_PrecioProducto) VALUES (@fact_NumeroFactura, @ifact_idProducto, @ifact_idCategoria, @ifact_Cantidad, @ifact_PrecioProducto)
 	END TRY
 	BEGIN CATCH
 		INSERT INTO FJGD_sql.ERRORES
@@ -884,7 +880,7 @@ BEGIN
 					GETDATE());
 	END CATCH
 
-	FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
+	FETCH NEXT FROM db_cursor_item_factura_pc INTO @fact_NumeroFactura, @fact_sucuEmail, @fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_PC, @ifact_PC_total
 END 
 
 CLOSE db_cursor_item_factura_pc  
@@ -917,22 +913,20 @@ DECLARE db_cursor_item_factura_ac CURSOR FOR
 ------------------------------------------
 SELECT
 	FACTURA_NUMERO,
+	SUCURSAL_MAIL,
 	CLIENTE_DNI,
 	CLIENTE_NOMBRE,
 	CLIENTE_APELLIDO,
 	FACTURA_FECHA,
 	ACCESORIO_CODIGO,
-	SUCURSAL_MAIL,
 	COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
 FROM gd_esquema.Maestra
 WHERE FACTURA_NUMERO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
-GROUP BY 
-	FACTURA_NUMERO,SUCURSAL_MAIL,
-	CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO
+GROUP BY FACTURA_NUMERO,SUCURSAL_MAIL,CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO
 ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
 ------------------------------------------
 OPEN db_cursor_item_factura_ac  
-FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre, @fact_clieApellido, @fact_fecha, @ifact_AC,@fact_sucursalMail, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura, @fact_sucursalMail, @fact_clieDNI, @fact_clieNombre, @fact_clieApellido, @fact_fecha, @ifact_AC, @ifact_AC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
@@ -941,8 +935,8 @@ BEGIN
 			SELECT @ifact_idProducto = @ifact_AC;
 			SELECT @ifact_idCategoria = cate_idCategoria FROM FJGD_sql.Categoria WHERE cate_idCategoria = 'ACCESORIO'
 			SELECT @ifact_Cantidad = @ifact_AC_total
-			SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD_sql.Producto 
-			WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
+			SELECT @ifact_PrecioProducto = prod_Precio FROM FJGD_sql.Producto WHERE prod_codProducto = @ifact_AC AND prod_idCategoria = @ifact_idCategoria
+			SELECT @fact_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Mail = @fact_sucursalMail
 		END
 
 		BEGIN
@@ -954,11 +948,9 @@ BEGIN
 			END
 		ELSE
 			BEGIN
-			SELECT @fact_created_total = fact_Total FROM FJGD_sql.Factura 
-			WHERE fact_Numero = @fact_NumeroFactura
+			SELECT @fact_created_total = fact_Total FROM FJGD_sql.Factura WHERE fact_Numero = @fact_NumeroFactura
 
-			UPDATE FJGD_sql.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) 
-			WHERE fact_Numero = @fact_NumeroFactura;
+			UPDATE FJGD_sql.Factura SET fact_Total = (@fact_created_total + (@ifact_PrecioProducto * @ifact_Cantidad)) WHERE fact_Numero = @fact_NumeroFactura;
 			END
 		END
 	
@@ -977,7 +969,7 @@ BEGIN
 					GETDATE());
 	END CATCH
 	
-	FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+	FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura, @fact_sucursalMail, @fact_clieDNI, @fact_clieNombre, @fact_clieApellido, @fact_fecha, @ifact_AC, @ifact_AC_total
 END 
 
 CLOSE db_cursor_item_factura_ac  
