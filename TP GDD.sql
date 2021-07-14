@@ -703,22 +703,16 @@ DECLARE @comp_FechaCompra smalldatetime
 DECLARE @comp_GastoTotal decimal(14,2)
 DECLARE @comp_idSucursal int
 
-DECLARE @Tabla_COMPRA TABLE( COMPRA_NUMERO decimal(18,0),SUCURSAL_MAIL varchar(50),COMPRA_FECHA smalldatetime,COMPRA_Monto_Subtotal decimal(18,2))
-INSERT INTO @Tabla_COMPRA
-			SELECT 
-				COMPRA_NUMERO,
-				SUCURSAL_MAIL, COMPRA_FECHA, COMPRA_PRECIO * SUM(COMPRA_CANTIDAD) AS COMPRA_Monto_Subtotal
-			FROM gd_esquema.Maestra
-			where COMPRA_NUMERO IS NOT NULL
-			  GROUP BY 
-				SUCURSAL_MAIL,COMPRA_FECHA,COMPRA_NUMERO,COMPRA_PRECIO;
-
 DECLARE db_cursor_compra CURSOR FOR 
 -----------------------------------------
 SELECT 
-		COMPRA_NUMERO,SUCURSAL_MAIL,COMPRA_FECHA,SUM(COMPRA_Monto_Subtotal)
-		FROM @Tabla_COMPRA
-		GROUP BY COMPRA_NUMERO, SUCURSAL_MAIL,COMPRA_FECHA
+COMPRA_NUMERO,
+SUCURSAL_MAIL,
+COMPRA_FECHA,
+SUM(COMPRA_PRECIO)
+FROM gd_esquema.Maestra
+WHERE COMPRA_NUMERO IS NOT NULL
+GROUP BY COMPRA_NUMERO,SUCURSAL_MAIL,COMPRA_FECHA
 ------------------------------------------
 OPEN db_cursor_compra  
 FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @comp_FechaCompra, @comp_GastoTotal
@@ -726,9 +720,7 @@ FETCH NEXT FROM db_cursor_compra INTO @comp_NumeroCompra, @comp_SucursalMail, @c
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
 	BEGIN TRY
-		SELECT @comp_idSucursal = sucu_idSucursal 
-		FROM FJGD_sql.Sucursal 
-		WHERE sucu_Mail= @comp_SucursalMail
+		SELECT @comp_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Mail= @comp_SucursalMail
 		INSERT INTO FJGD_sql.Compra(comp_NumeroCompra, comp_idSucursal, comp_FechaCompra, comp_GastoTotal) 
 				VALUES ( @comp_NumeroCompra, @comp_idSucursal, @comp_FechaCompra, @comp_GastoTotal)
 	END TRY
@@ -766,11 +758,13 @@ DECLARE db_cursor_item_compra CURSOR FOR
 ------------------------------------------
 SELECT
       COMPRA_NUMERO,
-	  COMPRA_PRECIO,  SUM(COMPRA_CANTIDAD) AS Cantidad,	  PC_CODIGO,	  ACCESORIO_CODIGO
+	  COMPRA_PRECIO,  
+	  SUM(COMPRA_CANTIDAD),	  
+	  PC_CODIGO,	  
+	  ACCESORIO_CODIGO
 FROM gd_esquema.Maestra
 WHERE COMPRA_NUMERO IS NOT NULL
-GROUP BY
-	  COMPRA_NUMERO,COMPRA_PRECIO,PC_CODIGO,ACCESORIO_CODIGO
+GROUP BY COMPRA_NUMERO,COMPRA_PRECIO,PC_CODIGO,ACCESORIO_CODIGO
 ------------------------------------------
 OPEN db_cursor_item_compra  
 FETCH NEXT FROM db_cursor_item_compra INTO @icomp_NumeroCompra, @icomp_PrecioCompra, @icomp_Cantidad, @icomp_codPC, @icomp_codAC
@@ -835,15 +829,13 @@ DECLARE @fact_created_total varchar(15)
 DECLARE db_cursor_item_factura_pc CURSOR FOR 
 ------------------------------------------
 SELECT
-		FACTURA_NUMERO,sucu_idSucursal,
+		FACTURA_NUMERO,SUCURSAL_MAIL,
 		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO,
 		COUNT(PC_CODIGO) AS total_pc_vendido
 FROM gd_esquema.Maestra
-JOIN FJGD_sql.Sucursal
-on sucu_Mail = SUCURSAL_MAIL
 WHERE FACTURA_NUMERO IS NOT NULL AND PC_CODIGO IS NOT NULL
 GROUP BY 
-		FACTURA_NUMERO,sucu_idSucursal,
+		FACTURA_NUMERO,SUCURSAL_MAIL,
 		CLIENTE_DNI,CLIENTE_NOMBRE,CLIENTE_APELLIDO,FACTURA_FECHA,PC_CODIGO
 ORDER BY FACTURA_NUMERO
 ------------------------------------------
@@ -905,6 +897,7 @@ DECLARE @fact_NumeroFactura decimal(18,0)
 DECLARE @fact_clieDNI varchar(15)
 DECLARE @fact_clieNombre varchar(30)
 DECLARE @fact_clieApellido varchar(30)
+DECLARE @fact_sucursalMail varchar(50)
 DECLARE @fact_idSucursal int
 DECLARE @fact_fecha smalldatetime
 --
@@ -923,20 +916,23 @@ DECLARE @fact_created_total varchar(15)
 DECLARE db_cursor_item_factura_ac CURSOR FOR 
 ------------------------------------------
 SELECT
-	FACTURA_NUMERO,sucu_idSucursal,
-	CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO,
+	FACTURA_NUMERO,
+	CLIENTE_DNI,
+	CLIENTE_NOMBRE,
+	CLIENTE_APELLIDO,
+	FACTURA_FECHA,
+	ACCESORIO_CODIGO,
+	SUCURSAL_MAIL,
 	COUNT(ACCESORIO_CODIGO) AS total_ac_vendido
 FROM gd_esquema.Maestra
-JOIN FJGD_sql.Sucursal
-on sucu_Mail = SUCURSAL_MAIL
 WHERE FACTURA_NUMERO IS NOT NULL AND ACCESORIO_CODIGO IS NOT NULL
 GROUP BY 
-	FACTURA_NUMERO,sucu_idSucursal,
+	FACTURA_NUMERO,SUCURSAL_MAIL,
 	CLIENTE_DNI,CLIENTE_NOMBRE,	CLIENTE_APELLIDO,FACTURA_FECHA,	ACCESORIO_CODIGO
 ORDER BY ACCESORIO_CODIGO DESC , FACTURA_NUMERO
 ------------------------------------------
 OPEN db_cursor_item_factura_ac  
-FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_idSucursal,@fact_clieDNI, @fact_clieNombre,@fact_clieApellido,  @fact_fecha, @ifact_AC, @ifact_AC_total
+FETCH NEXT FROM db_cursor_item_factura_ac INTO @fact_NumeroFactura,@fact_clieDNI, @fact_clieNombre, @fact_clieApellido, @fact_fecha, @ifact_AC,@fact_sucursalMail, @ifact_AC_total
 	
 WHILE @@FETCH_STATUS = 0  
 BEGIN  
@@ -952,6 +948,7 @@ BEGIN
 		BEGIN
 		IF NOT EXISTS (SELECT fact_Numero FROM FJGD_sql.Factura WHERE fact_Numero = @fact_NumeroFactura)
 			BEGIN
+			SELECT @fact_idSucursal = sucu_idSucursal FROM FJGD_sql.Sucursal WHERE sucu_Mail = @fact_sucursalMail
 			INSERT INTO FJGD_sql.Factura(fact_Numero,fact_idSucursal ,fact_clieDNI, fact_clieApellido, fact_clieNombre, fact_fecha, fact_Total) 
 			VALUES (@fact_NumeroFactura,@fact_idSucursal ,@fact_clieDNI, @fact_clieApellido, @fact_clieNombre, @fact_fecha, (@ifact_Cantidad * @ifact_PrecioProducto))
 			END
