@@ -4,8 +4,9 @@ go
 /* Creacion de tablas DI */
 CREATE TABLE FJGD_sql.BI_DIM_Tiempo(
 	bi_tiem_id int identity (1,1) NOT NULL,
-	bi_tiem_mes decimal(2,0) NOT NULL,
-	bi_tiem_anio decimal(4,0) NOT NULL
+	bi_tiem_dia varchar(2) NOT NULL,
+	bi_tiem_mes varchar(2) NOT NULL,
+	bi_tiem_anio varchar(4) NOT NULL
 )
 
 CREATE TABLE FJGD_sql.BI_DIM_Sucursal(
@@ -215,36 +216,40 @@ GO
 
 
 
-
-
 /* Migracion Tiempo*/
 
+DECLARE @tiem_dia varchar(50)
 DECLARE @tiem_mes varchar(50)
 DECLARE @tiem_anio varchar(50)
 DECLARE db_bi_cursor_tiempo CURSOR FOR 
 
 SELECT
 
-MONTH(fact_fecha),YEAR(fact_fecha)
+DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
 FROM FJGD_sql.Factura
-GROUP BY MONTH(fact_fecha),YEAR(fact_fecha)
+GROUP BY DAY(fact_fecha),MONTH(fact_fecha),YEAR(fact_fecha)
 
 UNION
 SELECT
-MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
+DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
 FROM FJGD_sql.Compra
-GROUP BY MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
-ORDER BY 2, 1;
+GROUP BY DAY(comp_FechaCompra),MONTH(comp_FechaCompra),YEAR(comp_FechaCompra)
+ORDER BY 3, 2;
 
 OPEN db_bi_cursor_tiempo  
-FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_mes, @tiem_anio
+FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
 
 WHILE @@FETCH_STATUS = 0  
 BEGIN
 	BEGIN
 		BEGIN TRY
-					INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_mes, bi_tiem_anio)
-					VALUES ( @tiem_mes, @tiem_anio)
+		IF(LEN (@tiem_dia)) = 1
+			SET @tiem_dia = '0'+ @tiem_dia
+		IF(LEN (@tiem_mes)) = 1
+			SET @tiem_mes = '0'+ @tiem_mes
+
+		INSERT INTO FJGD_sql.BI_DIM_Tiempo(bi_tiem_dia, bi_tiem_mes, bi_tiem_anio)
+		VALUES (@tiem_dia, @tiem_mes, @tiem_anio)
 					
 		END TRY
 		BEGIN CATCH 
@@ -258,7 +263,7 @@ BEGIN
 						ERROR_MESSAGE(),
 						GETDATE());
 		END CATCH
-	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_mes, @tiem_anio
+	FETCH NEXT FROM db_bi_cursor_tiempo INTO @tiem_dia, @tiem_mes, @tiem_anio
 	END 
 END 
 
@@ -789,7 +794,7 @@ SELECT
 	sum(fact_Total),
 	sum(ifact_Cantidad)
 FROM FJGD_sql.Factura
-JOIN FJGD_sql.Cliente ON clie_DNI = fact_clieDNI
+LEFT JOIN FJGD_sql.Cliente ON clie_DNI = fact_clieDNI
 JOIN FJGD_sql.ItemFactura ON ifact_FacturaNumero = fact_Numero
 JOIN FJGD_sql.Sucursal ON sucu_idSucursal = fact_idSucursal
 WHERE ifact_idCategoria = 'ACCESORIO'
@@ -884,20 +889,34 @@ GO
 --Promedio de tiempo en sotck de cada modelo de PC.
 
 CREATE VIEW FJGD_sql.[pc_modelo_promedio] AS
-
-SELECT *
-FROM  FJGD_sql.BI_FACT_PC_COMPRA
-JOIN FJGD_sql.BI_DIM_Tiempo ON fact_comp_pc_tiempo_fk = bi_tiem_id
-
-
-JOIN FJGD_sql.BI_FACT_PC_VENTA ON bi_tiem_id = fact_vent_pc_tiempo_fk
+SELECT
+bi_pc_codigo,
+(
+	SELECT 
+	AVG(DATEDIFF(DAY,bi_tiem_anio + '/' + bi_tiem_mes + '/'+ bi_tiem_dia ,GETDATE()))
+	FROM  FJGD_sql.BI_FACT_PC_COMPRA
+	JOIN FJGD_sql.BI_DIM_Tiempo ON fact_comp_pc_tiempo_fk = bi_tiem_id
+	JOIN FJGD_sql.BI_DIM_PC PC1 ON fact_comp_pc_pc_fk = bi_pc_id
+	WHERE PC1.bi_pc_codigo = DIMPC1.bi_pc_codigo
+	GROUP BY bi_pc_codigo
+)-
+(
+	SELECT 
+	AVG(DATEDIFF(DAY,bi_tiem_anio + '/' + bi_tiem_mes + '/'+ bi_tiem_dia ,GETDATE()))
+	FROM  FJGD_sql.BI_FACT_PC_VENTA
+	JOIN FJGD_sql.BI_DIM_Tiempo ON fact_vent_pc_tiempo_fk = bi_tiem_id
+	JOIN FJGD_sql.BI_DIM_PC PC1 ON fact_vent_pc_pc_fk = bi_pc_id
+	WHERE PC1.bi_pc_codigo = DIMPC1.bi_pc_codigo
+	GROUP BY bi_pc_codigo
+) AS [Tiempo promedio en stock (dias) ]
+FROM FJGD_sql.BI_DIM_PC DIMPC1
+GO
 
 
 /*VISTA PC 2 */
-/*
-CREATE VIEW FJGD_sql.[pc_precio_promedio] AS
 
-SELECT 
+CREATE VIEW FJGD_sql.[pc_precio_promedio] AS
+	SELECT 
 	PC1.bi_pc_codigo [CODIGO_PC],
 	(
 	SELECT 
@@ -910,10 +929,9 @@ SELECT
 	FROM FJGD_sql.BI_FACT_PC_VENTA PCV
 	JOIN FJGD_sql.BI_DIM_PC PC1 ON PC1.bi_pc_id = PCV.fact_vent_pc_pc_fk
 	GROUP BY PC1.bi_pc_codigo
-GO*/
+GO
 
 /*VISTA PC 3 */
-/*
 CREATE VIEW [pc_cantidad_vendido_comprado_x_sucursal_x_mes] AS
 SELECT 
 	(
@@ -929,11 +947,9 @@ SELECT
 	JOIN FJGD_sql.BI_DIM_Tiempo T ON T.bi_tiem_id = PCC.fact_comp_pc_tiempo_fk
 	JOIN FJGD_sql.BI_DIM_Sucursal S ON S.bi_sucu_id = PCC.fact_comp_pc_sucu_fk 
 	GROUP BY T.bi_tiem_mes, bi_sucu_mail
-	
 GO
-*/
+
 /*VISTA PC 4 */
-/*
 CREATE VIEW [pc_ganancias_x_sucursal_x_mes] AS
 
 SELECT 
@@ -950,9 +966,8 @@ SELECT
 	JOIN FJGD_sql.BI_DIM_Sucursal S ON S.bi_sucu_id = PCC.fact_comp_pc_sucu_fk 
 	GROUP BY T.bi_tiem_mes, bi_sucu_mail
 GO
-*/
+
 /*VISTA ACCESORIOS 1 */
-/*
 CREATE VIEW [ac_precio_promedio] AS
 
 SELECT 
@@ -969,9 +984,8 @@ SELECT
 	JOIN FJGD_sql.BI_DIM_AC AC1 ON AC1.bi_ac_id = ACV.fact_vent_ac_ac_fk
 	GROUP BY AC1.bi_ac_codigo
 GO
-*/
+
 /*VISTA ACCESORIOS 2 */
-/*
 CREATE VIEW [ac_ganancias_x_sucursal_x_mes] AS
 
 SELECT 
@@ -988,14 +1002,37 @@ SELECT
 	JOIN FJGD_sql.BI_DIM_Sucursal S ON S.bi_sucu_id = ACC.fact_comp_ac_sucu_fk 
 	GROUP BY T.bi_tiem_mes, bi_sucu_mail
 GO
-*/
+
 /*VISTA ACCESORIOS 3 */
 
 --Promedio de tiempo en sotck de cada modelo de AC.
 
+CREATE VIEW FJGD_sql.[pc_modelo_promedio] AS
+SELECT
+bi_ac_codigo,
+(
+	SELECT 
+	AVG(DATEDIFF(DAY,bi_tiem_anio + '/' + bi_tiem_mes + '/'+ bi_tiem_dia ,GETDATE()))
+	FROM  FJGD_sql.BI_FACT_AC_COMPRA
+	JOIN FJGD_sql.BI_DIM_Tiempo ON fact_comp_ac_tiempo_fk = bi_tiem_id
+	JOIN FJGD_sql.BI_DIM_AC PC1 ON fact_comp_ac_ac_fk = bi_ac_id
+	WHERE PC1.bi_ac_codigo = DIMAC1.bi_ac_codigo
+	GROUP BY bi_ac_codigo
+)-
+(
+	SELECT 
+	AVG(DATEDIFF(DAY,bi_tiem_anio + '/' + bi_tiem_mes + '/'+ bi_tiem_dia ,GETDATE()))
+	FROM  FJGD_sql.BI_FACT_AC_VENTA
+	JOIN FJGD_sql.BI_DIM_Tiempo ON fact_vent_ac_tiempo_fk = bi_tiem_id
+	JOIN FJGD_sql.BI_DIM_AC PC1 ON fact_vent_ac_ac_fk = bi_ac_id
+	WHERE PC1.bi_ac_codigo = DIMAC1.bi_ac_codigo
+	GROUP BY bi_ac_codigo
+) AS [Tiempo promedio en stock (dias)]
+FROM FJGD_sql.BI_DIM_AC DIMAC1
+GO
+
 
 /*VISTA ACCESORIOS 4 */
-/*
 CREATE VIEW [ac_max_stock_anual] AS
 
 SELECT 
@@ -1013,4 +1050,4 @@ SELECT
 	JOIN FJGD_sql.BI_DIM_Tiempo T ON T.bi_tiem_id = ACC.fact_comp_ac_tiempo_fk
 	JOIN FJGD_sql.BI_DIM_Sucursal S ON S.bi_sucu_id = ACC.fact_comp_ac_sucu_fk 
 	GROUP BY T.bi_tiem_anio, bi_sucu_mail
-GO*/
+GO
